@@ -15,6 +15,7 @@ from core.pipeline import Pipeline
 from core.filters import (average_filter, gaussian_filter,)
 from core.histogram import compute_histogram, local_histogram_equalization
 from gui.filter_panel import FilterPanel
+from gui.histogram_window import HistogramWindow
 from gui.noise_panel import NoisePanel
 from gui.pipeline_panel import PipelinePanel
 from core.Sobel import sobel_filter
@@ -102,59 +103,6 @@ class EdgeResultsWindow(ctk.CTkToplevel):
 
             lbl = tk.Label(col, image=photo, bg=BG_MID)
             lbl.pack()
-
-
-class HistogramWindow(ctk.CTkToplevel):
-    """Show the grayscale histogram for the current image."""
-
-    def __init__(self, parent, histogram, title="Image Histogram"):
-        super().__init__(parent)
-        self.title(title)
-        self.geometry("920x420")
-        self.resizable(False, False)
-
-        ctk.CTkLabel(self, text=title, font=FONT_TITLE).pack(pady=(10, 4))
-
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self._canvas = tk.Canvas(frame, bg=BG_MID, highlightthickness=0)
-        self._canvas.pack(fill="both", expand=True, padx=8, pady=8)
-
-        self._draw_histogram(histogram)
-
-    def _draw_histogram(self, histogram):
-        self.update_idletasks()
-        width = max(self._canvas.winfo_width(), 860)
-        height = max(self._canvas.winfo_height(), 300)
-        self._canvas.delete("all")
-
-        left = 40
-        top = 20
-        bottom = height - 35
-        right = width - 20
-
-        self._canvas.create_rectangle(left, top, right, bottom, outline="#3a4a5a")
-
-        max_count = int(histogram.max()) if histogram.size else 1
-        max_count = max(max_count, 1)
-        plot_width = right - left
-        plot_height = bottom - top
-        bin_width = plot_width / 256.0
-
-        for i, count in enumerate(histogram):
-            bar_height = (count / max_count) * plot_height if max_count else 0
-            x0 = left + i * bin_width
-            x1 = left + (i + 1) * bin_width
-            y0 = bottom - bar_height
-            self._canvas.create_rectangle(x0, y0, x1, bottom, fill="#1f6aa5", outline="")
-
-        self._canvas.create_text(left, bottom + 14, text="0", fill=TEXT_DIM, anchor="w")
-        self._canvas.create_text(right, bottom + 14, text="255", fill=TEXT_DIM, anchor="e")
-        self._canvas.create_text(left + plot_width / 2, height - 8,
-                                 text="Pixel intensity", fill=TEXT_DIM)
-        self._canvas.create_text(12, top + plot_height / 2,
-                                 text="Count", fill=TEXT_DIM, angle=90)
 
 
 class CloseImageDialog(ctk.CTkToplevel):
