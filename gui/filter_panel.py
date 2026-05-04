@@ -3,7 +3,8 @@ from tkinter import messagebox
 
 import customtkinter as ctk
 
-from core.filters import average_filter, gaussian_filter, median_filter
+from core.filters import average_filter, gaussian_filter
+from core.Median import median_filter
 
 
 FONT_TITLE = ("Segoe UI", 13, "bold")
