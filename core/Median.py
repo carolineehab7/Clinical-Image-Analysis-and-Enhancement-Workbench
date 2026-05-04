@@ -18,17 +18,18 @@ def median_single(image: np.ndarray, kernel_size: int) -> np.ndarray:
     padded = np.pad(image.astype(np.float64), pad, mode='reflect')
 
     # create a window view (Height, Width, kernel Size, kernel Size)
+    # stride is pixels I will skip
     shape = (height, width, kernel_size, kernel_size)
     s = padded.strides
-    strides = (s[0], s[1], s[0], s[1])  
+    strides = (s[0], s[1], s[0], s[1])  #s[0] move to next row, s[1] move to next column while moving the window
     patches = as_strided(padded, shape=shape, strides=strides)
     
-    n = kernel_size * kernel_size
+    n = kernel_size * kernel_size #total number of pixels in the kernel
     mid_idx = n // 2 # get the median index
-    flat_patches = patches.reshape(height, width, n)
+    flat_patches = patches.reshape(height, width, n) 
 
-    # Sort each patch alone then combine them
+    # Sort pixels in kernel and get median value
     sorted_patches = np.sort(flat_patches, axis=2)
-    result = sorted_patches[:, :, mid_idx] # take the median value from each patch
+    result = sorted_patches[:, :, mid_idx] 
 
     return np.clip(result, 0, 255).astype(np.uint8)
