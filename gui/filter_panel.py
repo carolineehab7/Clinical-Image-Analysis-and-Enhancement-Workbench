@@ -20,6 +20,12 @@ def parse_kernel_size(s: str) -> int:
 class FilterPanel:
 	"""Smoothing filter controls and operations (Member 2 responsibilities)."""
 
+	_FILTER_HINTS = {
+		"Average": "Best for mild Gaussian, Poisson, and uniform noise.",
+		"Gaussian": "Best for Gaussian, speckle, Poisson, and uniform noise.",
+		"Median": "Best for salt-and-pepper noise and other impulse noise.",
+	}
+
 	def __init__(self, parent, pipeline, on_image_updated, on_pipeline_updated, on_status):
 		self.parent = parent
 		self.pipeline = pipeline
@@ -46,6 +52,16 @@ class FilterPanel:
 						  values=["3x3", "5x5", "7x7", "9x9"],
 						  width=226).pack(padx=12, pady=3)
 
+		self._hint_label = ctk.CTkLabel(
+			self.parent,
+			text=self._FILTER_HINTS["Average"],
+			font=FONT_SMALL,
+			text_color=TEXT_DIM,
+			justify="left",
+			wraplength=226,
+		)
+		self._hint_label.pack(anchor="w", padx=12, pady=(0, 4))
+
 		self._gaussian_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
 		ctk.CTkLabel(self._gaussian_frame, text="Variance (σ²):",
 					 font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
@@ -71,6 +87,7 @@ class FilterPanel:
 			fill="x", padx=8, pady=8)
 
 	def _on_filter_change(self, choice):
+		self._hint_label.configure(text=self._FILTER_HINTS.get(choice, ""))
 		if choice == "Gaussian":
 			self._gaussian_frame.pack(padx=12, pady=2, fill="x", before=self._apply_button)
 		else:
