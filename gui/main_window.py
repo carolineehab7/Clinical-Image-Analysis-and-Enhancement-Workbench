@@ -16,6 +16,7 @@ from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
 from core.filters import (average_filter, gaussian_filter,
                            sobel_filter, prewitt_filter, median_filter)
 from core.histogram import local_histogram_equalization
+from gui.pipeline_panel import PipelinePanel
 
 
 # ──────────────────────────────────────────────────────────────
@@ -122,6 +123,7 @@ class MainWindow(ctk.CTk):
         self._photo_ref  = None          # Keep PhotoImage alive
         self._edge_cache = None          # (gx, gy, mag, detector_name)
         self._zoom_level = 1.0           # Accumulated zoom scale
+        self._pipeline_panel = None      # Will be created in _build_layout
 
         self._build_layout()
         self._set_status("Welcome! Open a DICOM, JPEG, or BMP image to begin.", "info")
@@ -157,10 +159,6 @@ class MainWindow(ctk.CTk):
                       fg_color=ACCENT,      **btn_cfg).pack(side="left", padx=4, pady=8)
         ctk.CTkButton(bar, text="💾  Save",  command=self._save_image,
                       fg_color="#2d6a4f",   **btn_cfg).pack(side="left", padx=4, pady=8)
-        ctk.CTkButton(bar, text="↩  Undo",  command=self._undo,
-                      fg_color="#5a3e8e",   **btn_cfg).pack(side="left", padx=4, pady=8)
-        ctk.CTkButton(bar, text="🔄  Reset", command=self._reset,
-                      fg_color="#8b2500",   **btn_cfg).pack(side="left", padx=4, pady=8)
 
         # Status label (right-aligned)
         self._status_var = tk.StringVar(value="")
@@ -315,16 +313,10 @@ class MainWindow(ctk.CTk):
 
         self._divider(panel)
 
-        self._section_title(panel, "⚙  PIPELINE STEPS")
-        self._pipe_box = ctk.CTkTextbox(panel, height=350, font=FONT_MONO,
-                                        state="disabled")
-        self._pipe_box.pack(fill="x", padx=8, pady=4)
-
-        ctk.CTkLabel(panel, text="Step count:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
-        self._step_count_var = tk.StringVar(value="0")
-        ctk.CTkLabel(panel, textvariable=self._step_count_var,
-                     font=FONT_TITLE).pack(anchor="w", padx=12)
+        # Initialize pipeline panel with undo/reset callbacks
+        self._pipeline_panel = PipelinePanel(panel, 
+                                             on_undo=self._undo,
+                                             on_reset=self._reset)
 
     # ──────────────────────────────────────────────────────
     # UI helpers
@@ -671,13 +663,6 @@ class MainWindow(ctk.CTk):
         self._meta_box.configure(state="disabled")
 
     def _update_pipeline_display(self):
-        self._pipe_box.configure(state="normal")
-        self._pipe_box.delete("1.0", "end")
-
-        for i, step in enumerate(self.pipeline.steps):
-            marker = "▶" if i == self.pipeline.step_count - 1 else "  "
-            self._pipe_box.insert("end", f"{marker} {i}. {step}\n")
-
-        self._pipe_box.see("end")
-        self._pipe_box.configure(state="disabled")
-        self._step_count_var.set(str(self.pipeline.step_count))
+        """Update the pipeline display via the pipeline panel."""
+        if self._pipeline_panel:
+            self._pipeline_panel.update_display(self.pipeline)
