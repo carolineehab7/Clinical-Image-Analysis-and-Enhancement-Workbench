@@ -13,7 +13,7 @@ import customtkinter as ctk
 from core.image_io import load_image, save_image
 from core.pipeline import Pipeline
 from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
-from core.filters import (average_filter, gaussian_filter,)
+from core.filters import (box_smoothing_filter, gaussian_smoothing_filter,)
 from core.histogram import local_histogram_equalization
 from gui.filter_panel import FilterPanel
 from gui.noise_panel import NoisePanel
