@@ -87,14 +87,16 @@ def _equalize_block(block: np.ndarray) -> np.ndarray:
 
     denominator = n_pixels - cdf_min
 
+    # If the block has no intensity spread, preserve it unchanged.
+    # This avoids turning flat regions into black patches.
+    if denominator <= 0:
+        return block.astype(np.uint8).copy()
+
     # Step 4: Build look-up table (LUT)
     lut = np.zeros(256, dtype=np.uint8)
     for i in range(256):
-        if denominator > 0:
-            val = int(round((cdf[i] - cdf_min) / denominator * 255))
-            lut[i] = max(0, min(255, val))   # Clamp to valid uint8 range
-        else:
-            lut[i] = 0
+        val = int(round((cdf[i] - cdf_min) / denominator * 255))
+        lut[i] = max(0, min(255, val))   # Clamp to valid uint8 range
 
     # Step 5: Apply LUT to every pixel in the block
     return lut[block.astype(np.uint8)]
