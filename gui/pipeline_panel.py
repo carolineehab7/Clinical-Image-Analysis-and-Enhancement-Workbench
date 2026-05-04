@@ -23,7 +23,7 @@ class PipelinePanel:
         ctk.CTkButton(btn_row, text="↩  Undo", width=110, height=34,
                       command=self.on_undo,
                       fg_color="#5a3e8e", corner_radius=6).pack(side="left", padx=2)
-        ctk.CTkButton(btn_row, text=" Reset", width=110, height=34,
+        ctk.CTkButton(btn_row, text="↻  Reset", width=110, height=34,
                       command=self.on_reset,
                       fg_color="#8b2500", corner_radius=6).pack(side="left", padx=2)
 

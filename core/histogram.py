@@ -13,15 +13,14 @@ def compute_histogram(image: np.ndarray) -> np.ndarray:
 def _ensure_gray(image: np.ndarray) -> np.ndarray:
     return RGB_to_gray(image)
 
-
+#converts the 2D grid of pixels into a 1D list. A 512×512 image becomes a list of 262,144 numbers
 def _equalize_block(block: np.ndarray) -> np.ndarray:
     flat = block.flatten().astype(np.uint8)
     n_pixels = flat.size
-
     hist = np.zeros(256, dtype=np.int64)
     for intensity in range(256):
         hist[intensity] = int(np.sum(flat == intensity))
-
+#compute the cumulative distribution function (CDF) from the histogram, which is used to map the original pixel values to their new equalized values
     cdf = np.zeros(256, dtype=np.int64)
     cdf[0] = hist[0]
     for i in range(1, 256):
