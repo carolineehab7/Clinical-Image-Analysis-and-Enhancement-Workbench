@@ -230,8 +230,8 @@ class MainWindow(ctk.CTk):
         ctk.CTkButton(panel, text="▶  Apply Local HE",
                       command=self._apply_local_he).pack(padx=12, pady=6, fill="x")
 
-        ctk.CTkButton(panel, text=" Show Histogram",
-                  command=self._show_histogram).pack(padx=12, pady=(2, 6), fill="x")
+        ctk.CTkButton(panel, text="Before/After HE",
+                  command=self._show_histogram_comparison).pack(padx=12, pady=(2, 6), fill="x")
 
     # ── Center image canvas ───────────────────────────────
 
@@ -473,13 +473,29 @@ class MainWindow(ctk.CTk):
         self._update_pipeline_display()
         self._set_status(f"Applied: {desc}", "ok")
 
-    def _show_histogram(self):
+    def _show_histogram_comparison(self):
+        """Show before and after local histogram equalization comparison."""
         if self.pipeline.is_empty:
             messagebox.showwarning("No Image", "Load an image first.")
             return
 
-        histogram = compute_histogram(self.pipeline.current_image)
-        HistogramWindow(self, histogram)
+        # Get a fresh copy of the current image (don't modify pipeline)
+        current_image = self.pipeline.current_image.copy()
+        histogram_before = compute_histogram(current_image)
+        
+        # Apply local histogram equalization with selected block size
+        block_size = parse_block_size(self._block_var.get())
+        image_equalized = local_histogram_equalization(current_image.copy(), block_size)
+        histogram_after = compute_histogram(image_equalized)
+        
+        # Show comparison window
+        HistogramWindow(
+            self, 
+            histogram_before, 
+            title="Histogram Comparison: Local Histogram Equalization",
+            histogram_after=histogram_after,
+            title_after=f"After Local HE ({block_size}x{block_size})"
+        )
 
     # ──────────────────────────────────────────────────────
     # Info panel updates
