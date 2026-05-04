@@ -1,4 +1,6 @@
 import numpy as np
+from core.RGB_to_gray import RGB_to_gray
+
 
 def compute_histogram(image: np.ndarray) -> np.ndarray:
     gray = _ensure_gray(image).flatten().astype(np.uint8)
@@ -9,11 +11,8 @@ def compute_histogram(image: np.ndarray) -> np.ndarray:
 
 
 def _ensure_gray(image: np.ndarray) -> np.ndarray:
-    if image.ndim == 3:
-        return (0.299 * image[:, :, 0] +
-                0.587 * image[:, :, 1] +
-                0.114 * image[:, :, 2]).astype(np.uint8)
-    return image.astype(np.uint8)
+    return RGB_to_gray(image)
+
 
 def _equalize_block(block: np.ndarray) -> np.ndarray:
     flat = block.flatten().astype(np.uint8)
@@ -45,6 +44,7 @@ def _equalize_block(block: np.ndarray) -> np.ndarray:
         lut[i] = max(0, min(255, val))
 
     return lut[block.astype(np.uint8)]
+
 
 def local_histogram_equalization(image: np.ndarray, block_size: int) -> np.ndarray:
     gray = _ensure_gray(image)
