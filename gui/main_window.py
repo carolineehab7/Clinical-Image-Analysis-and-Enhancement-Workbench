@@ -12,7 +12,7 @@ from gui.filter_panel import FilterPanel
 from gui.histogram_window import HistogramWindow
 from gui.noise_panel import NoisePanel
 from gui.pipeline_panel import PipelinePanel
-from .zoom_UI import zoom_in, zoom_out
+from .zoom_panel import zoom_in, zoom_out
 from .EdgeDetection_panel import EdgeDetectionPanel
 
 
@@ -199,7 +199,7 @@ class MainWindow(ctk.CTk):
             on_status=self._set_status,
         )
 
-        # ── Edge Detection ────────────────────────────────
+         ###### Edge Detection ######
         self._edge_panel = EdgeDetectionPanel(
             panel,
             pipeline=self.pipeline,
