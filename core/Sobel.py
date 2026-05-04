@@ -4,7 +4,7 @@ from core.convolution import _convolve_single
 from .normalization import normalize
 
 def sobel_filter(image: np.ndarray):
-    gray = RGB_to_gray.RGB_to_gray.RGB_to_gray(image)
+    gray = RGB_to_gray(image)
 
     # vertical sobel kernel
     Ky = np.array([[-1, 0, 1],
