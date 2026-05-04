@@ -1,8 +1,3 @@
-"""
-Clinical Image Analysis Workbench — Main GUI
-Built with CustomTkinter for a modern dark-themed desktop interface.
-"""
-
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -12,16 +7,13 @@ import customtkinter as ctk
 
 from core.image_io import load_image, save_image
 from core.pipeline import Pipeline
-from core.filters import (average_filter, gaussian_filter,)
 from core.histogram import compute_histogram, local_histogram_equalization
 from gui.filter_panel import FilterPanel
 from gui.histogram_window import HistogramWindow
 from gui.noise_panel import NoisePanel
 from gui.pipeline_panel import PipelinePanel
-from core.Sobel import sobel_filter
-from core.Median import median_filter
-
-from .zoom_UI import do_zoom, zoom_in, zoom_out
+from .zoom_UI import zoom_in, zoom_out
+from .EdgeDetection_panel import EdgeDetectionPanel
 
 
 # ──────────────────────────────────────────────────────────────
@@ -64,46 +56,6 @@ def array_to_pil(arr: np.ndarray) -> Image.Image:
     elif arr.ndim == 3 and arr.shape[2] == 4:
         return Image.fromarray(arr[:, :, :3], mode='RGB')
     return Image.fromarray(arr)
-
-
-# ──────────────────────────────────────────────────────────────
-# Edge Results Popup
-# ──────────────────────────────────────────────────────────────
-
-class EdgeResultsWindow(ctk.CTkToplevel):
-    """Show horizontal, vertical, and magnitude edge maps side-by-side."""
-
-    def __init__(self, parent, gx, gy, mag, detector_name):
-        super().__init__(parent)
-        self.title(f"{detector_name} Edge Detection Results")
-        self.geometry("900x380")
-        self.resizable(False, False)
-
-        ctk.CTkLabel(self, text=f"{detector_name} Edge Detection",
-                     font=FONT_TITLE).pack(pady=8)
-
-        frame = ctk.CTkFrame(self)
-        frame.pack(fill="both", expand=True, padx=10, pady=5)
-
-        thumb_size = (260, 260)
-        images = [("Horizontal (Gx)", gx),
-                  ("Vertical (Gy)", gy),
-                  ("Magnitude (Combined)", mag)]
-
-        self._photos = []
-        for label_text, arr in images:
-            col = ctk.CTkFrame(frame)
-            col.pack(side="left", expand=True, fill="both", padx=5, pady=5)
-
-            ctk.CTkLabel(col, text=label_text, font=FONT_SMALL).pack(pady=3)
-
-            pil = array_to_pil(arr).resize(thumb_size, Image.NEAREST)
-            photo = ImageTk.PhotoImage(pil)
-            self._photos.append(photo)
-
-            lbl = tk.Label(col, image=photo, bg=BG_MID)
-            lbl.pack()
-
 
 class CloseImageDialog(ctk.CTkToplevel):
     """Confirmation dialog shown before closing the current image."""
@@ -238,8 +190,17 @@ class MainWindow(ctk.CTk):
 
         self._divider(panel)
 
-        # ── Smoothing Filters (Member 2 panel) ────────────
+        # ── Smoothing Filters ────────────
         self._filter_panel = FilterPanel(
+            panel,
+            pipeline=self.pipeline,
+            on_image_updated=self._display_image,
+            on_pipeline_updated=self._update_pipeline_display,
+            on_status=self._set_status,
+        )
+
+        # ── Edge Detection ────────────────────────────────
+        self._edge_panel = EdgeDetectionPanel(
             panel,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
@@ -256,34 +217,6 @@ class MainWindow(ctk.CTk):
             on_status=self._set_status,
         )
 
-        # ── Edge Detection ────────────────────────────────
-        self._section_title(panel, "EDGE DETECTION")
-
-        ctk.CTkLabel(panel, text="Detector:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
-        self._edge_var = tk.StringVar(value="Sobel")
-        ctk.CTkOptionMenu(panel, variable=self._edge_var,
-                          values=["Sobel"],
-                          width=226).pack(padx=12, pady=3)
-
-        ctk.CTkLabel(panel, text="Apply to Pipeline:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
-        self._edge_apply_var = tk.StringVar(value="Magnitude (Combined)")
-        ctk.CTkOptionMenu(panel, variable=self._edge_apply_var,
-                          values=["Horizontal (Gx)",
-                                  "Vertical (Gy)",
-                                  "Magnitude (Combined)"],
-                          width=226).pack(padx=12, pady=3)
-
-        edge_row = ctk.CTkFrame(panel, fg_color="transparent")
-        edge_row.pack(fill="x", padx=12, pady=4)
-        ctk.CTkButton(edge_row, text="▶  Apply", width=107,
-                      command=self._apply_edge).pack(side="left", padx=2)
-        ctk.CTkButton(edge_row, text="👁  All 3", width=107,
-                      command=self._show_all_edges).pack(side="right", padx=2)
-
-        self._divider(panel)
-
         # ── Local Histogram Equalization ──────────────────
         self._section_title(panel, "LOCAL HISTOGRAM EQ.")
 
@@ -297,7 +230,7 @@ class MainWindow(ctk.CTk):
         ctk.CTkButton(panel, text="▶  Apply Local HE",
                       command=self._apply_local_he).pack(padx=12, pady=6, fill="x")
 
-        ctk.CTkButton(panel, text="📊  Show Histogram",
+        ctk.CTkButton(panel, text=" Show Histogram",
                   command=self._show_histogram).pack(padx=12, pady=(2, 6), fill="x")
 
     # ── Center image canvas ───────────────────────────────
@@ -514,61 +447,6 @@ class MainWindow(ctk.CTk):
         self._display_image(img)
         self._update_pipeline_display()
         self._set_status("Reset to original image.", "warn")
-
-    # ──────────────────────────────────────────────────────
-    # Edge detection
-    # ──────────────────────────────────────────────────────
-
-    def _run_edge_detection(self):
-        """Run edge detection and cache the results."""
-        if self.pipeline.is_empty:
-            messagebox.showwarning("No Image", "Load an image first.")
-            return None
-
-        detector = self._edge_var.get()
-        current  = self.pipeline.current_image
-
-        try:
-            if detector == "Sobel":
-                gx, gy, mag = sobel_filter(current)
-        except Exception as exc:
-            messagebox.showerror("Edge Detection Error", str(exc))
-            return None
-
-        self._edge_cache = (gx, gy, mag, detector)
-        return gx, gy, mag, detector
-
-    def _apply_edge(self):
-        """Apply one of the three edge maps into the pipeline."""
-        result = self._run_edge_detection()
-        if result is None:
-            return
-        gx, gy, mag, detector = result
-
-        choice = self._edge_apply_var.get()
-        if "Horizontal" in choice:
-            img  = gx
-            kind = "Gx"
-        elif "Vertical" in choice:
-            img  = gy
-            kind = "Gy"
-        else:
-            img  = mag
-            kind = "Magnitude"
-
-        desc = f"{detector} Edge — {kind}"
-        self.pipeline.push(img, desc)
-        self._display_image(img)
-        self._update_pipeline_display()
-        self._set_status(f"Applied: {desc}", "ok")
-
-    def _show_all_edges(self):
-        """Open a popup showing all three edge maps."""
-        result = self._run_edge_detection()
-        if result is None:
-            return
-        gx, gy, mag, detector = result
-        EdgeResultsWindow(self, gx, gy, mag, detector)
 
     # ──────────────────────────────────────────────────────
     # Local Histogram Equalization
