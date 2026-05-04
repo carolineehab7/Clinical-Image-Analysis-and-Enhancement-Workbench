@@ -56,14 +56,6 @@ def add_speckle_noise(image: np.ndarray, sigma: float = 0.1,
     return _clip_to_uint8(noisy)
 
 
-def add_poisson_noise(image: np.ndarray, seed: int | None = None) -> np.ndarray:
-    rng = np.random.default_rng(seed)
-    base = _as_float_image(image)
-    vals = np.clip(base, 0, 255)
-    noisy = rng.poisson(vals).astype(np.float64)
-    return _clip_to_uint8(noisy)
-
-
 def add_uniform_noise(image: np.ndarray, low: float = -20.0, high: float = 20.0,
                       seed: int | None = None) -> np.ndarray:
     if high < low:

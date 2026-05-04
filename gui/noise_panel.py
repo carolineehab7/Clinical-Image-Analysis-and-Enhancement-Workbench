@@ -5,7 +5,6 @@ import customtkinter as ctk
 
 from core.noise import (
     add_gaussian_noise,
-    add_poisson_noise,
     add_salt_pepper_noise,
     add_speckle_noise,
     add_uniform_noise,
@@ -40,7 +39,7 @@ class NoisePanel:
         ctk.CTkOptionMenu(
             self.parent,
             variable=self._noise_var,
-            values=["Gaussian", "Salt & Pepper", "Speckle", "Poisson", "Uniform"],
+            values=["Gaussian", "Salt & Pepper", "Speckle", "Uniform"],
             command=self._on_noise_change,
             width=226,
         ).pack(padx=12, pady=3)
@@ -86,9 +85,6 @@ class NoisePanel:
     def _on_noise_change(self, choice):
         self._strength_frame.pack_forget()
         self._pepper_frame.pack_forget()
-
-        if choice == "Poisson":
-            return
 
         if choice == "Salt & Pepper":
             self._strength_label.configure(text="Noise Amount:")
@@ -150,10 +146,6 @@ class NoisePanel:
                     raise ValueError("Sigma must be positive.")
                 result = add_speckle_noise(current, sigma=sigma)
                 desc = f"Speckle Noise σ={sigma}"
-
-            elif choice == "Poisson":
-                result = add_poisson_noise(current)
-                desc = "Poisson Noise"
 
             elif choice == "Uniform":
                 strength = parse_float(self._strength_entry.get(), 20.0)
