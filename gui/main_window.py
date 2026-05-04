@@ -110,7 +110,7 @@ class MainWindow(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-        self.title("🏥 Clinical Image Analysis & Enhancement Workbench")
+        self.title(" Clinical Image Analysis & Enhancement Workbench")
         self.geometry("1380x820")
         self.minsize(1000, 650)
 
@@ -147,14 +147,14 @@ class MainWindow(ctk.CTk):
         bar.grid_propagate(False)
 
         # Logo / title
-        ctk.CTkLabel(bar, text="🏥  Clinical Image Workbench",
+        ctk.CTkLabel(bar, text="  Clinical Image Workbench",
                      font=("Segoe UI", 14, "bold")).pack(side="left", padx=15)
 
         # Action buttons
         btn_cfg = dict(width=110, height=34, corner_radius=6)
-        ctk.CTkButton(bar, text="📂  Open",  command=self._open_image,
+        ctk.CTkButton(bar, text="  Open",  command=self._open_image,
                       fg_color=ACCENT,      **btn_cfg).pack(side="left", padx=4, pady=8)
-        ctk.CTkButton(bar, text="💾  Save",  command=self._save_image,
+        ctk.CTkButton(bar, text="  Save",  command=self._save_image,
                       fg_color="#2d6a4f",   **btn_cfg).pack(side="left", padx=4, pady=8)
 
         # Status label (right-aligned)
@@ -170,7 +170,7 @@ class MainWindow(ctk.CTk):
         panel.grid(row=1, column=0, sticky="nsew")
 
         # ── Zoom ──────────────────────────────────────────
-        self._section_title(panel, "🔍  ZOOM")
+        self._section_title(panel, " ZOOM")
 
         ctk.CTkLabel(panel, text="Interpolation Method:", font=FONT_SMALL,
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
@@ -202,7 +202,7 @@ class MainWindow(ctk.CTk):
         )
 
         # ── Edge Detection ────────────────────────────────
-        self._section_title(panel, "📐  EDGE DETECTION")
+        self._section_title(panel, "EDGE DETECTION")
 
         ctk.CTkLabel(panel, text="Detector:", font=FONT_SMALL,
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
@@ -230,7 +230,7 @@ class MainWindow(ctk.CTk):
         self._divider(panel)
 
         # ── Local Histogram Equalization ──────────────────
-        self._section_title(panel, "📊  LOCAL HISTOGRAM EQ.")
+        self._section_title(panel, "LOCAL HISTOGRAM EQ.")
 
         ctk.CTkLabel(panel, text="Block Size:", font=FONT_SMALL,
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
@@ -267,7 +267,7 @@ class MainWindow(ctk.CTk):
         # Placeholder text
         self._canvas.create_text(
             500, 300,
-            text="📂  Open an image to begin\n\nSupported formats: DICOM · JPEG · BMP",
+            text="Open an image to begin\n\nSupported formats: DICOM · JPEG · BMP",
             fill=TEXT_DIM, font=("Segoe UI", 14), justify="center",
             tags="placeholder"
         )
@@ -280,7 +280,7 @@ class MainWindow(ctk.CTk):
         panel = ctk.CTkScrollableFrame(self, width=240, corner_radius=0)
         panel.grid(row=1, column=2, sticky="nsew")
 
-        self._section_title(panel, "📋  IMAGE METADATA")
+        self._section_title(panel, "IMAGE METADATA")
         self._meta_box = ctk.CTkTextbox(panel, height=220, font=FONT_MONO,
                                         state="disabled")
         self._meta_box.pack(fill="x", padx=8, pady=4)
