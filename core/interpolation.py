@@ -12,14 +12,15 @@ def nearest_neighbor_zoom(image: np.ndarray, scale: float) -> np.ndarray:
     new_height = max(1, int(round(height * scale)))
     new_width = max(1, int(round(width * scale)))
 
-    destination_rows = np.arange(new_height) #create 1D array or this new height (starts from 0 to new_height-1)
-    destination_cols = np.arange(new_width) #create 1D array or this new width (starts from 0 to new_width-1)
+    destination_rows = np.arange(new_height) #create 1D array of this new height (starts from 0 to new_height-1)
+    destination_cols = np.arange(new_width) #create 1D array of this new width (starts from 0 to new_width-1)
 
-    #divide the destination row and column by the scale to get the corresponding source row and column in the original image
+    #overlay the new grid on the original image
     src_rows = destination_rows / scale
     src_cols = destination_cols / scale
 
-    # rounds the source/new coordinates to nearest integer to get its place of pixel in the original image
+    # find the closest original pixel for each new pixel 
+    # copies the intensity of the nearest pixel of the original to the new pixel
     src_row_idx = np.clip(np.round(src_rows).astype(np.int64), 0, height - 1)
     src_col_idx = np.clip(np.round(src_cols).astype(np.int64), 0, width - 1)
 
@@ -29,7 +30,6 @@ def nearest_neighbor_zoom(image: np.ndarray, scale: float) -> np.ndarray:
 
 
 def bilinear_zoom(image: np.ndarray, scale: float) -> np.ndarray:
-
     if scale <= 0:
         raise ValueError("Scale must be positive.")
 
