@@ -16,6 +16,7 @@ from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
 from core.filters import (average_filter, gaussian_filter,)
 from core.histogram import local_histogram_equalization
 from gui.filter_panel import FilterPanel
+from gui.noise_panel import NoisePanel
 from gui.pipeline_panel import PipelinePanel
 from core.Sobel import sobel_filter
 from core.Median import median_filter
@@ -237,6 +238,15 @@ class MainWindow(ctk.CTk):
 
         # ── Smoothing Filters (Member 2 panel) ────────────
         self._filter_panel = FilterPanel(
+            panel,
+            pipeline=self.pipeline,
+            on_image_updated=self._display_image,
+            on_pipeline_updated=self._update_pipeline_display,
+            on_status=self._set_status,
+        )
+
+        # ── Noise Generation ─────────────────────────────
+        self._noise_panel = NoisePanel(
             panel,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
