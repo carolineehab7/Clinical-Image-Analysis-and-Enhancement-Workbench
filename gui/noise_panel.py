@@ -46,11 +46,16 @@ class NoisePanel:
         ).pack(padx=12, pady=3)
 
         self._strength_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
-        ctk.CTkLabel(self._strength_frame, text="Strength / Sigma:",
-                     font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
+        self._strength_label = ctk.CTkLabel(
+            self._strength_frame,
+            text="Strength / Sigma:",
+            font=FONT_SMALL,
+            text_color=TEXT_DIM,
+        )
+        self._strength_label.pack(anchor="w")
         self._strength_entry = ctk.CTkEntry(self._strength_frame,
-                                            placeholder_text="e.g. 10 or 0.1",
-                                            width=226)
+                                         placeholder_text="e.g. 10 or 0.1",
+                                         width=226)
         self._strength_entry.pack()
 
         self._pepper_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
@@ -86,6 +91,8 @@ class NoisePanel:
             return
 
         if choice == "Salt & Pepper":
+            self._strength_label.configure(text="Noise Amount:")
+            self._strength_entry.configure(placeholder_text="0.05")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
             self._pepper_frame.pack(padx=12, pady=2, fill="x")
             self._strength_entry.delete(0, "end")
@@ -93,14 +100,20 @@ class NoisePanel:
             self._salt_ratio_entry.delete(0, "end")
             self._salt_ratio_entry.insert(0, "0.5")
         elif choice == "Gaussian":
+            self._strength_label.configure(text="Strength / Sigma:")
+            self._strength_entry.configure(placeholder_text="10")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
             self._strength_entry.delete(0, "end")
             self._strength_entry.insert(0, "10")
         elif choice == "Speckle":
+            self._strength_label.configure(text="Strength / Sigma:")
+            self._strength_entry.configure(placeholder_text="0.1")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
             self._strength_entry.delete(0, "end")
             self._strength_entry.insert(0, "0.1")
         elif choice == "Uniform":
+            self._strength_label.configure(text="Noise Strength:")
+            self._strength_entry.configure(placeholder_text="20")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
             self._strength_entry.delete(0, "end")
             self._strength_entry.insert(0, "20")

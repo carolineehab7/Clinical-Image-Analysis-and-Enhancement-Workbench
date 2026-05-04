@@ -46,15 +46,19 @@ class FilterPanel:
 						  values=["3x3", "5x5", "7x7", "9x9"],
 						  width=226).pack(padx=12, pady=3)
 
-		self._sigma_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
-		ctk.CTkLabel(self._sigma_frame, text="Variance (σ²):",
+		self._gaussian_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
+		ctk.CTkLabel(self._gaussian_frame, text="Variance (σ²):",
 					 font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
-		self._sigma_entry = ctk.CTkEntry(self._sigma_frame,
+		self._sigma_entry = ctk.CTkEntry(self._gaussian_frame,
 										 placeholder_text="e.g. 2.25", width=226)
 		self._sigma_entry.pack()
 
-		ctk.CTkButton(self.parent, text="▶  Apply Smoothing",
-					  command=self._apply_smoothing).pack(padx=12, pady=6, fill="x")
+		self._apply_button = ctk.CTkButton(
+			self.parent,
+			text="▶  Apply Smoothing",
+			command=self._apply_smoothing,
+		)
+		self._apply_button.pack(padx=12, pady=6, fill="x")
 
 		self._divider()
 
@@ -68,9 +72,9 @@ class FilterPanel:
 
 	def _on_filter_change(self, choice):
 		if choice == "Gaussian":
-			self._sigma_frame.pack(padx=12, pady=2, fill="x")
+			self._gaussian_frame.pack(padx=12, pady=2, fill="x", before=self._apply_button)
 		else:
-			self._sigma_frame.pack_forget()
+			self._gaussian_frame.pack_forget()
 
 	def _apply_smoothing(self):
 		if self.pipeline.is_empty:
