@@ -12,7 +12,6 @@ import customtkinter as ctk
 
 from core.image_io import load_image, save_image
 from core.pipeline import Pipeline
-from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
 from core.filters import (average_filter, gaussian_filter,)
 from core.histogram import local_histogram_equalization
 from gui.filter_panel import FilterPanel
@@ -20,6 +19,8 @@ from gui.noise_panel import NoisePanel
 from gui.pipeline_panel import PipelinePanel
 from core.Sobel import sobel_filter
 from core.Median import median_filter
+
+from .zoom_UI import do_zoom, zoom_in, zoom_out
 
 
 # ──────────────────────────────────────────────────────────────
@@ -213,7 +214,7 @@ class MainWindow(ctk.CTk):
         panel = ctk.CTkScrollableFrame(self, width=250, corner_radius=0)
         panel.grid(row=1, column=0, sticky="nsew")
 
-        # ── Zoom ──────────────────────────────────────────
+        ###### Zoom ######
         self._section_title(panel, " ZOOM")
 
         ctk.CTkLabel(panel, text="Interpolation Method:", font=FONT_SMALL,
@@ -226,9 +227,9 @@ class MainWindow(ctk.CTk):
         zoom_row = ctk.CTkFrame(panel, fg_color="transparent")
         zoom_row.pack(fill="x", padx=12, pady=4)
         ctk.CTkButton(zoom_row, text="＋  Zoom In",  width=107,
-                      command=self._zoom_in).pack(side="left", padx=2)
+                      command=lambda: zoom_in(self)).pack(side="left", padx=2)
         ctk.CTkButton(zoom_row, text="－  Zoom Out", width=107,
-                      command=self._zoom_out).pack(side="right", padx=2)
+                      command=lambda: zoom_out(self)).pack(side="right", padx=2)
 
         self._zoom_lbl = ctk.CTkLabel(panel, text="Scale: 1.00×",
                                       font=FONT_SMALL, text_color=TEXT_DIM)
@@ -458,7 +459,7 @@ class MainWindow(ctk.CTk):
         self._canvas.delete("all")
         self._canvas.create_text(
             500, 300,
-            text="📂  Open an image to begin\n\nSupported formats: DICOM · JPEG · BMP",
+            text="  Open an image to begin\n\nSupported formats: DICOM · JPEG · BMP",
             fill=TEXT_DIM, font=("Segoe UI", 14), justify="center",
             tags="placeholder"
         )
@@ -509,47 +510,6 @@ class MainWindow(ctk.CTk):
         self._display_image(img)
         self._update_pipeline_display()
         self._set_status("Reset to original image.", "warn")
-
-    # ──────────────────────────────────────────────────────
-    # Zoom
-    # ──────────────────────────────────────────────────────
-
-    def _do_zoom(self, factor: float):
-        if self.pipeline.is_empty:
-            messagebox.showwarning("No Image", "Load an image first.")
-            return
-
-        new_scale = self._zoom_level * factor
-        if new_scale < 0.1 or new_scale > 8.0:
-            self._set_status("Zoom limit reached (0.1× – 8.0×).", "warn")
-            return
-
-        current = self.pipeline.current_image
-        interp  = self._interp_var.get()
-        step    = "Zoom In" if factor > 1 else "Zoom Out"
-        label   = f"{step} ×{factor:.2f} ({interp}) → Scale {new_scale:.2f}×"
-
-        try:
-            if interp == "Nearest Neighbor":
-                result = nearest_neighbor_zoom(current, factor)
-            else:
-                result = bilinear_zoom(current, factor)
-        except Exception as exc:
-            messagebox.showerror("Zoom Error", str(exc))
-            return
-
-        self._zoom_level = new_scale
-        self._zoom_lbl.configure(text=f"Scale: {new_scale:.2f}×")
-        self.pipeline.push(result, label)
-        self._display_image(result)
-        self._update_pipeline_display()
-        self._set_status(label, "ok")
-
-    def _zoom_in(self):
-        self._do_zoom(1.25)
-
-    def _zoom_out(self):
-        self._do_zoom(0.8)
 
     # ──────────────────────────────────────────────────────
     # Edge detection

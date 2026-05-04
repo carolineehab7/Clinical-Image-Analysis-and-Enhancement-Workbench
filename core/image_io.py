@@ -65,6 +65,15 @@ def _load_dicom(filepath: str):
         pixel_array = ds.pixel_array
     except Exception as e:
         raise ValueError(f"Could not read pixel data from DICOM: {e}")
+    
+    if pixel_array.ndim == 3:
+        # If last axis is channels (RGB/RGBA), keep the array
+        if pixel_array.shape[2] in (3, 4):
+            pass
+        else:
+            # Assume frames are the first axis: pick the middle frame
+            mid = pixel_array.shape[0] // 2
+            pixel_array = pixel_array[mid]
 
     # Handle different DICOM pixel representations
     if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
