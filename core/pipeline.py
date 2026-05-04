@@ -9,6 +9,10 @@ class Pipeline:
     def load(self, image: np.ndarray) -> None:
         self._stack = [(image.copy(), "Original")]
 
+    def clear(self) -> None:
+        """Remove all images from the pipeline."""
+        self._stack = []
+
     @property
     def is_empty(self) -> bool:
         return len(self._stack) == 0
