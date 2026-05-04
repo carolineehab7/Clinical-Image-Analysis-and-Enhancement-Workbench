@@ -102,6 +102,47 @@ class EdgeResultsWindow(ctk.CTkToplevel):
             lbl.pack()
 
 
+class CloseImageDialog(ctk.CTkToplevel):
+    """Confirmation dialog shown before closing the current image."""
+
+    def __init__(self, parent, on_confirm):
+        super().__init__(parent)
+        self.title("Close Image")
+        self.geometry("420x180")
+        self.resizable(False, False)
+        self.transient(parent)
+        self.grab_set()
+
+        self._on_confirm = on_confirm
+
+        ctk.CTkLabel(
+            self,
+            text="Are you sure you want to close. Your changes will not be saved",
+            font=FONT_TITLE,
+            wraplength=360,
+            justify="center",
+        ).pack(padx=20, pady=(24, 18))
+
+        btn_row = ctk.CTkFrame(self, fg_color="transparent")
+        btn_row.pack(pady=8)
+
+        ctk.CTkButton(btn_row, text="Close", width=120,
+                      command=self._dismiss).pack(side="left", padx=8)
+        ctk.CTkButton(btn_row, text="Confirm", width=120,
+                      fg_color="#8b2500", command=self._confirm).pack(side="left", padx=8)
+
+        self.protocol("WM_DELETE_WINDOW", self._dismiss)
+
+    def _dismiss(self):
+        self.grab_release()
+        self.destroy()
+
+    def _confirm(self):
+        self.grab_release()
+        self.destroy()
+        self._on_confirm()
+
+
 # ──────────────────────────────────────────────────────────────
 # Main Application Window
 # ──────────────────────────────────────────────────────────────
@@ -156,6 +197,8 @@ class MainWindow(ctk.CTk):
                       fg_color=ACCENT,      **btn_cfg).pack(side="left", padx=4, pady=8)
         ctk.CTkButton(bar, text="💾  Save",  command=self._save_image,
                       fg_color="#2d6a4f",   **btn_cfg).pack(side="left", padx=4, pady=8)
+        ctk.CTkButton(bar, text="✖  Close", command=self._ask_close_image,
+                  fg_color="#8b2500",   **btn_cfg).pack(side="left", padx=4, pady=8)
 
         # Status label (right-aligned)
         self._status_var = tk.StringVar(value="")
@@ -386,6 +429,33 @@ class MainWindow(ctk.CTk):
         fname = os.path.basename(path)
         h, w = image_array.shape[:2]
         self._set_status(f"Loaded: {fname}  ({w}×{h})", "ok")
+
+    def _ask_close_image(self):
+        if self.pipeline.is_empty:
+            self._set_status("No image is currently open.", "warn")
+            return
+
+        CloseImageDialog(self, self._close_image)
+
+    def _close_image(self):
+        self.pipeline.clear()
+        self.metadata = {}
+        self._photo_ref = None
+        self._edge_cache = None
+        self._zoom_level = 1.0
+        self._zoom_lbl.configure(text="Scale: 1.00×")
+
+        self._canvas.delete("all")
+        self._canvas.create_text(
+            500, 300,
+            text="📂  Open an image to begin\n\nSupported formats: DICOM · JPEG · BMP",
+            fill=TEXT_DIM, font=("Segoe UI", 14), justify="center",
+            tags="placeholder"
+        )
+
+        self._update_metadata_display()
+        self._update_pipeline_display()
+        self._set_status("Image closed. Open another file to continue.", "warn")
 
     def _save_image(self):
         if self.pipeline.is_empty:
