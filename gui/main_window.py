@@ -13,9 +13,9 @@ import customtkinter as ctk
 from core.image_io import load_image, save_image
 from core.pipeline import Pipeline
 from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
-from core.filters import (average_filter, gaussian_filter,
-                           sobel_filter, prewitt_filter, median_filter)
+from core.filters import sobel_filter, prewitt_filter
 from core.histogram import local_histogram_equalization
+from gui.filter_panel import FilterPanel
 from gui.pipeline_panel import PipelinePanel
 
 
@@ -43,11 +43,6 @@ FONT_MONO  = ("Courier New", 10)
 # ──────────────────────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────────────────────
-
-def parse_kernel_size(s: str) -> int:
-    """Convert '3x3' → 3."""
-    return int(s.split("x")[0])
-
 
 def parse_block_size(s: str) -> int:
     """Convert '8x8' → 8."""
@@ -195,36 +190,14 @@ class MainWindow(ctk.CTk):
 
         self._divider(panel)
 
-        # ── Smoothing Filters ─────────────────────────────
-        self._section_title(panel, "🎛  SMOOTHING FILTERS")
-
-        ctk.CTkLabel(panel, text="Filter Type:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
-        self._filter_var = tk.StringVar(value="Average")
-        ctk.CTkOptionMenu(panel, variable=self._filter_var,
-                          values=["Average", "Gaussian", "Median"],
-                          command=self._on_filter_change,
-                          width=226).pack(padx=12, pady=3)
-
-        ctk.CTkLabel(panel, text="Kernel Size:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
-        self._kernel_var = tk.StringVar(value="3x3")
-        ctk.CTkOptionMenu(panel, variable=self._kernel_var,
-                          values=["3x3", "5x5", "7x7", "9x9"],
-                          width=226).pack(padx=12, pady=3)
-
-        # Gaussian-only sigma entry (hidden by default)
-        self._sigma_frame = ctk.CTkFrame(panel, fg_color="transparent")
-        ctk.CTkLabel(self._sigma_frame, text="Sigma (σ):",
-                     font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
-        self._sigma_entry = ctk.CTkEntry(self._sigma_frame,
-                                         placeholder_text="e.g. 1.5", width=226)
-        self._sigma_entry.pack()
-
-        ctk.CTkButton(panel, text="▶  Apply Smoothing",
-                      command=self._apply_smoothing).pack(padx=12, pady=6, fill="x")
-
-        self._divider(panel)
+        # ── Smoothing Filters (Member 2 panel) ────────────
+        self._filter_panel = FilterPanel(
+            panel,
+            pipeline=self.pipeline,
+            on_image_updated=self._display_image,
+            on_pipeline_updated=self._update_pipeline_display,
+            on_status=self._set_status,
+        )
 
         # ── Edge Detection ────────────────────────────────
         self._section_title(panel, "📐  EDGE DETECTION")
@@ -495,58 +468,6 @@ class MainWindow(ctk.CTk):
 
     def _zoom_out(self):
         self._do_zoom(0.8)
-
-    # ──────────────────────────────────────────────────────
-    # Smoothing filters
-    # ──────────────────────────────────────────────────────
-
-    def _on_filter_change(self, choice):
-        if choice == "Gaussian":
-            self._sigma_frame.pack(padx=12, pady=2, fill="x")
-        else:
-            self._sigma_frame.pack_forget()
-
-    def _apply_smoothing(self):
-        if self.pipeline.is_empty:
-            messagebox.showwarning("No Image", "Load an image first.")
-            return
-
-        ftype  = self._filter_var.get()
-        ksize  = parse_kernel_size(self._kernel_var.get())
-
-        try:
-            if ftype == "Average":
-                desc = f"Average Filter {ksize}×{ksize}"
-                result = self.pipeline.apply(
-                    lambda img: average_filter(img, ksize), desc)
-
-            elif ftype == "Gaussian":
-                sigma_txt = self._sigma_entry.get().strip() or "1.5"
-                sigma = float(sigma_txt)
-                if sigma <= 0:
-                    raise ValueError("Sigma must be positive.")
-                desc = f"Gaussian Filter {ksize}×{ksize}, σ={sigma}"
-                result = self.pipeline.apply(
-                    lambda img, k=ksize, s=sigma: gaussian_filter(img, k, s), desc)
-
-            elif ftype == "Median":
-                desc = f"Median Filter {ksize}×{ksize}"
-                result = self.pipeline.apply(
-                    lambda img: median_filter(img, ksize), desc)
-
-            else:
-                return
-
-        except ValueError as exc:
-            messagebox.showerror("Input Error", str(exc))
-            return
-        except Exception as exc:
-            messagebox.showerror("Filter Error", str(exc))
-            return
-
-        self._display_image(result)
-        self._update_pipeline_display()
-        self._set_status(f"Applied: {desc}", "ok")
 
     # ──────────────────────────────────────────────────────
     # Edge detection
