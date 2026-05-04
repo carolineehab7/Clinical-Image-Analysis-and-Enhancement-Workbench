@@ -1,8 +1,3 @@
-"""
-Pipeline Panel — Manages UI for operation history, step display, and pipeline controls.
-Includes Undo & Reset buttons wired to pipeline state management.
-"""
-
 import customtkinter as ctk
 import tkinter as tk
 
@@ -15,28 +10,13 @@ ACCENT     = "#1f6aa5"
 
 
 class PipelinePanel:
-    """
-    Manages the pipeline UI panel displayed on the right side of the main window.
-    Displays operation history, step count, Undo & Reset buttons.
-    """
-
     def __init__(self, parent, on_undo=None, on_reset=None):
-        """
-        Initialize the pipeline panel.
-        
-        Args:
-            parent: Parent CTk widget (usually the main window).
-            on_undo: Callback function for Undo button.
-            on_reset: Callback function for Reset button.
-        """
         self.parent = parent
         self.on_undo = on_undo or (lambda: None)
         self.on_reset = on_reset or (lambda: None)
         self._build_ui()
 
     def _build_ui(self):
-        """Build the pipeline UI components."""
-        # ── Undo & Reset Buttons ───────────────────────────────
         btn_row = ctk.CTkFrame(self.parent, fg_color="transparent")
         btn_row.pack(fill="x", padx=12, pady=8)
         
@@ -49,7 +29,6 @@ class PipelinePanel:
 
         self._divider()
 
-        # ── Pipeline Steps Display ─────────────────────────────
         ctk.CTkLabel(self.parent, text="⚙  PIPELINE STEPS", font=FONT_TITLE).pack(
             anchor="w", padx=12, pady=(12, 2))
 
@@ -64,17 +43,10 @@ class PipelinePanel:
                      font=FONT_TITLE).pack(anchor="w", padx=12)
 
     def _divider(self):
-        """Add a visual divider line."""
         ctk.CTkFrame(self.parent, height=2, fg_color="#0f3460").pack(
             fill="x", padx=8, pady=8)
 
     def update_display(self, pipeline):
-        """
-        Update the pipeline steps display and step count.
-        
-        Args:
-            pipeline: The Pipeline instance to display.
-        """
         self._pipe_box.configure(state="normal")
         self._pipe_box.delete("1.0", "end")
 
