@@ -1,10 +1,10 @@
 import numpy as np
-import RGB_to_gray as RBG_To_Gray
+from .RGB_to_gray import RGB_to_gray
 from core.convolution import _convolve_single
-import normalization as Normalization
+from .normalization import normalize
 
 def sobel_filter(image: np.ndarray):
-    gray = RBG_To_Gray.RGB_to_gray.RGB_to_gray(image)
+    gray = RGB_to_gray.RGB_to_gray.RGB_to_gray(image)
 
     # vertical sobel kernel
     Ky = np.array([[-1, 0, 1],
@@ -20,4 +20,4 @@ def sobel_filter(image: np.ndarray):
     gy = _convolve_single(gray, Ky)
     magnitude = np.sqrt(gx ** 2 + gy ** 2)
 
-    return Normalization(gx), Normalization(gy), Normalization(magnitude)
+    return normalize(gx), normalize(gy), normalize(magnitude)

@@ -13,10 +13,11 @@ import customtkinter as ctk
 from core.image_io import load_image, save_image
 from core.pipeline import Pipeline
 from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
-from core.filters import (average_filter, gaussian_filter,
-                           sobel_filter, prewitt_filter, median_filter)
+from core.filters import (average_filter, gaussian_filter,)
 from core.histogram import local_histogram_equalization
 from gui.pipeline_panel import PipelinePanel
+from core.Sobel import sobel_filter
+from core.Median import median_filter
 
 
 # ──────────────────────────────────────────────────────────────
@@ -233,7 +234,7 @@ class MainWindow(ctk.CTk):
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self._edge_var = tk.StringVar(value="Sobel")
         ctk.CTkOptionMenu(panel, variable=self._edge_var,
-                          values=["Sobel", "Prewitt"],
+                          values=["Sobel"],
                           width=226).pack(padx=12, pady=3)
 
         ctk.CTkLabel(panel, text="Apply to Pipeline:", font=FONT_SMALL,
@@ -564,8 +565,6 @@ class MainWindow(ctk.CTk):
         try:
             if detector == "Sobel":
                 gx, gy, mag = sobel_filter(current)
-            else:
-                gx, gy, mag = prewitt_filter(current)
         except Exception as exc:
             messagebox.showerror("Edge Detection Error", str(exc))
             return None
