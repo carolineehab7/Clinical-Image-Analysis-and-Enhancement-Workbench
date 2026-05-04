@@ -29,7 +29,6 @@ def convolve2d(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
         Convolved array as float64 (caller should clip/cast as needed).
     """
     if image.ndim == 3:
-        # Apply to every channel independently, then stack
         channels = [_convolve_single(image[:, :, c].astype(np.float64), kernel)
                     for c in range(image.shape[2])]
         return np.stack(channels, axis=2)
@@ -49,20 +48,14 @@ def _convolve_single(image: np.ndarray, kernel: np.ndarray) -> np.ndarray:
     pad_h = kh // 2
     pad_w = kw // 2
 
-    # Reflect-pad so every output pixel has a full neighbourhood
     padded = np.pad(image, ((pad_h, pad_h), (pad_w, pad_w)), mode='reflect')
 
-    # Build sliding-window view using stride tricks
-    # Shape:   (H, W, kH, kW)
-    # Strides: same row/col strides for the patch axes as for the image axes
     ph, pw = padded.shape
     shape = (h, w, kh, kw)
-    s = padded.strides   # (bytes_per_row, bytes_per_col)
+    s = padded.strides
     strides = (s[0], s[1], s[0], s[1])
 
     patches = as_strided(padded, shape=shape, strides=strides)
 
-    # Element-wise multiply every patch with the kernel, then sum → scalar per pixel
-    # einsum 'ijkl,kl->ij': for each (i,j), sum over k,l of patches[i,j,k,l]*kernel[k,l]
     result = np.einsum('ijkl,kl->ij', patches, kernel)
     return result

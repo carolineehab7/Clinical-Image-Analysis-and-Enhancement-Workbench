@@ -47,10 +47,10 @@ class FilterPanel:
 						  width=226).pack(padx=12, pady=3)
 
 		self._sigma_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
-		ctk.CTkLabel(self._sigma_frame, text="Sigma (σ):",
+		ctk.CTkLabel(self._sigma_frame, text="Variance (σ²):",
 					 font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
 		self._sigma_entry = ctk.CTkEntry(self._sigma_frame,
-										 placeholder_text="e.g. 1.5", width=226)
+										 placeholder_text="e.g. 2.25", width=226)
 		self._sigma_entry.pack()
 
 		ctk.CTkButton(self.parent, text="▶  Apply Smoothing",
@@ -86,13 +86,13 @@ class FilterPanel:
 				result = self.pipeline.apply(lambda img: average_filter(img, ksize), desc)
 
 			elif ftype == "Gaussian":
-				sigma_txt = self._sigma_entry.get().strip() or "1.5"
-				sigma = float(sigma_txt)
-				if sigma <= 0:
-					raise ValueError("Sigma must be positive.")
-				desc = f"Gaussian Filter {ksize}×{ksize}, σ={sigma}"
+				variance_txt = self._sigma_entry.get().strip() or "2.25"
+				variance = float(variance_txt)
+				if variance <= 0:
+					raise ValueError("Variance must be positive.")
+				desc = f"Gaussian Filter {ksize}×{ksize}, σ²={variance}"
 				result = self.pipeline.apply(
-					lambda img, k=ksize, s=sigma: gaussian_filter(img, k, s), desc
+					lambda img, k=ksize, v=variance: gaussian_filter(img, k, v), desc
 				)
 
 			elif ftype == "Median":
