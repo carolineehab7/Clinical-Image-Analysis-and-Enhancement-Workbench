@@ -12,11 +12,10 @@ def nearest_neighbor_zoom(image: np.ndarray, scale: float) -> np.ndarray:
     new_height = max(1, int(round(height * scale)))
     new_width = max(1, int(round(width * scale)))
 
-
     destination_rows = np.arange(new_height) #create 1D array or this new height (starts from 0 to new_height-1)
     destination_cols = np.arange(new_width) #create 1D array or this new width (starts from 0 to new_width-1)
 
-    #divide the destination row and column by the scale to get the new coordinates in the zoomed image
+    #divide the destination row and column by the scale to get the corresponding source row and column in the original image
     src_rows = destination_rows / scale
     src_cols = destination_cols / scale
 
