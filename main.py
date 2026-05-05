@@ -1,8 +1,6 @@
 """
 Clinical Image Analysis & Enhancement Workbench
 Phase 1 — Spatial Domain Operations & Core Architecture
-
-Run:  python main.py
 """
 
 import sys

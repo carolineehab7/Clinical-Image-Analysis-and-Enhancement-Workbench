@@ -1,9 +1,10 @@
+"User interface for filter selection"
 import tkinter as tk
 from tkinter import messagebox
 
 import customtkinter as ctk
 
-from core.filters import average_filter, gaussian_filter
+from core.filters import box_smoothing_filter, gaussian_smoothing_filter
 from core.Median import median_filter
 
 
@@ -13,16 +14,15 @@ TEXT_DIM = "#888888"
 
 
 def parse_kernel_size(s: str) -> int:
-	"""Convert a string like '3x3' to the integer kernel size 3."""
 	return int(s.split("x")[0])
-
+"parses the kernel size from mXm -> m"
 
 class FilterPanel:
-	"""Smoothing filter controls and operations (Member 2 responsibilities)."""
+	"""Smoothing filter controls and operations"""
 
 	_FILTER_HINTS = {
 		"Average": "Best for mild Gaussian, Poisson, and uniform noise.",
-		"Gaussian": "Best for Gaussian, speckle, Poisson, and uniform noise.",
+		"Gaussian": "Recommended for Gaussian and speckle noise; better edge preservation than average.",
 		"Median": "Best for salt-and-pepper noise and other impulse noise.",
 	}
 
@@ -35,6 +35,7 @@ class FilterPanel:
 		self._build_ui()
 
 	def _build_ui(self):
+		"Drop down menu to allow user to select filter type and window size"
 		self._section_title("SMOOTHING FILTERS")
 
 		ctk.CTkLabel(self.parent, text="Filter Type:", font=FONT_SMALL,
@@ -44,7 +45,7 @@ class FilterPanel:
 						  values=["Average", "Gaussian", "Median"],
 						  command=self._on_filter_change,
 						  width=226).pack(padx=12, pady=3)
-
+		#Kernel size options: Smaller kernels (3x3, 5x5) are better for mild noise and better edge preservation, while larger kernels (7x7, 9x9)stronger smoothing but more blurring.
 		ctk.CTkLabel(self.parent, text="Kernel Size:", font=FONT_SMALL,
 					 text_color=TEXT_DIM).pack(anchor="w", padx=12)
 		self._kernel_var = tk.StringVar(value="3x3")
@@ -59,9 +60,9 @@ class FilterPanel:
 			text_color=TEXT_DIM,
 			justify="left",
 			wraplength=226,
-		)
+		) 
 		self._hint_label.pack(anchor="w", padx=12, pady=(0, 4))
-
+        # Gaussian filter needs an extra variance input: Small variance → slight blur / Large variance → stronger blur.
 		self._gaussian_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
 		ctk.CTkLabel(self._gaussian_frame, text="Variance (σ²):",
 					 font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
@@ -89,7 +90,10 @@ class FilterPanel:
 	def _on_filter_change(self, choice):
 		self._hint_label.configure(text=self._FILTER_HINTS.get(choice, ""))
 		if choice == "Gaussian":
+			self._kernel_var.set("9x9")
 			self._gaussian_frame.pack(padx=12, pady=2, fill="x", before=self._apply_button)
+			self._sigma_entry.delete(0, "end")
+			self._sigma_entry.insert(0, "32.0") # Default variance for 9x9 Gaussian kernel
 		else:
 			self._gaussian_frame.pack_forget()
 
@@ -102,9 +106,10 @@ class FilterPanel:
 		ksize = parse_kernel_size(self._kernel_var.get())
 
 		try:
+            #Applying the specified filter to the image and documenting it in the pipeline.
 			if ftype == "Average":
 				desc = f"Average Filter {ksize}×{ksize}"
-				result = self.pipeline.apply(lambda img: average_filter(img, ksize), desc)
+				result = self.pipeline.apply(lambda img: box_smoothing_filter(img, ksize), desc)
 
 			elif ftype == "Gaussian":
 				variance_txt = self._sigma_entry.get().strip() or "2.25"
@@ -113,7 +118,7 @@ class FilterPanel:
 					raise ValueError("Variance must be positive.")
 				desc = f"Gaussian Filter {ksize}×{ksize}, σ²={variance}"
 				result = self.pipeline.apply(
-					lambda img, k=ksize, v=variance: gaussian_filter(img, k, v), desc
+					lambda img, k=ksize, v=variance: gaussian_smoothing_filter(img, k, v), desc
 				)
 
 			elif ftype == "Median":
