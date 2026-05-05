@@ -6,11 +6,7 @@ import customtkinter as ctk
 
 from core.filters import box_smoothing_filter, gaussian_smoothing_filter
 from core.Median import median_filter
-
-
-FONT_TITLE = ("Segoe UI", 13, "bold")
-FONT_SMALL = ("Segoe UI", 10)
-TEXT_DIM = "#888888"
+from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_DIVIDER, BG_ELEVATED, BG_SURFACE, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
 
 
 def parse_kernel_size(s: str) -> int:
@@ -36,25 +32,34 @@ class FilterPanel:
 
 	def _build_ui(self):
 		"Drop down menu to allow user to select filter type and window size"
-		self._section_title("SMOOTHING FILTERS")
+		self._card = ctk.CTkFrame(
+			self.parent,
+			fg_color=BG_ELEVATED,
+			corner_radius=10,
+			border_width=1,
+			border_color=BG_DIVIDER,
+		)
+		self._card.pack(fill="x", padx=10, pady=(0, 8))
 
-		ctk.CTkLabel(self.parent, text="Filter Type:", font=FONT_SMALL,
+		self._section_title(self._card, "SMOOTHING FILTERS")
+
+		ctk.CTkLabel(self._card, text="Filter Type:", font=FONT_SMALL,
 					 text_color=TEXT_DIM).pack(anchor="w", padx=12)
 		self._filter_var = tk.StringVar(value="Average")
-		ctk.CTkOptionMenu(self.parent, variable=self._filter_var,
+		ctk.CTkOptionMenu(self._card, variable=self._filter_var,
 						  values=["Average", "Gaussian", "Median"],
 						  command=self._on_filter_change,
 						  width=226).pack(padx=12, pady=3)
 		#Kernel size options: Smaller kernels (3x3, 5x5) are better for mild noise and better edge preservation, while larger kernels (7x7, 9x9)stronger smoothing but more blurring.
-		ctk.CTkLabel(self.parent, text="Kernel Size:", font=FONT_SMALL,
+		ctk.CTkLabel(self._card, text="Kernel Size:", font=FONT_SMALL,
 					 text_color=TEXT_DIM).pack(anchor="w", padx=12)
 		self._kernel_var = tk.StringVar(value="3x3")
-		ctk.CTkOptionMenu(self.parent, variable=self._kernel_var,
+		ctk.CTkOptionMenu(self._card, variable=self._kernel_var,
 						  values=["3x3", "5x5", "7x7", "9x9"],
 						  width=226).pack(padx=12, pady=3)
 
 		self._hint_label = ctk.CTkLabel(
-			self.parent,
+			self._card,
 			text=self._FILTER_HINTS["Average"],
 			font=FONT_SMALL,
 			text_color=TEXT_DIM,
@@ -62,8 +67,7 @@ class FilterPanel:
 			wraplength=226,
 		) 
 		self._hint_label.pack(anchor="w", padx=12, pady=(0, 4))
-        # Gaussian filter needs an extra variance input: Small variance → slight blur / Large variance → stronger blur.
-		self._gaussian_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
+		self._gaussian_frame = ctk.CTkFrame(self._card, fg_color="transparent")
 		ctk.CTkLabel(self._gaussian_frame, text="Variance (σ²):",
 					 font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
 		self._sigma_entry = ctk.CTkEntry(self._gaussian_frame,
@@ -71,20 +75,22 @@ class FilterPanel:
 		self._sigma_entry.pack()
 
 		self._apply_button = ctk.CTkButton(
-			self.parent,
+			self._card,
 			text="▶  Apply Smoothing",
 			command=self._apply_smoothing,
+			fg_color=ACCENT_CYAN,
+			hover_color="#00869B",
 		)
 		self._apply_button.pack(padx=12, pady=6, fill="x")
 
 		self._divider()
 
-	def _section_title(self, text):
-		ctk.CTkLabel(self.parent, text=text, font=FONT_TITLE).pack(
+	def _section_title(self, parent, text):
+		ctk.CTkLabel(parent, text=text, font=FONT_TITLE, text_color=TEXT_MAIN).pack(
 			anchor="w", padx=12, pady=(12, 2))
 
 	def _divider(self):
-		ctk.CTkFrame(self.parent, height=2, fg_color="#0f3460").pack(
+		ctk.CTkFrame(self.parent, height=2, fg_color=BG_DIVIDER).pack(
 			fill="x", padx=8, pady=8)
 
 	def _on_filter_change(self, choice):

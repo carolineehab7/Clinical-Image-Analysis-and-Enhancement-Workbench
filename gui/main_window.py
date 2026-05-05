@@ -14,6 +14,28 @@ from gui.filter_panel import FilterPanel
 from gui.histogram_window import HistogramWindow
 from gui.noise_panel import NoisePanel
 from gui.pipeline_panel import PipelinePanel
+from gui.theme import (
+    ACCENT_BLUE,
+    ACCENT_CYAN,
+    ACCENT_TEAL,
+    APP_MODE,
+    BG_CANVAS,
+    BG_DIVIDER,
+    BG_SIDEBAR,
+    BG_SURFACE,
+    BG_TEXTBOX,
+    BG_WINDOW,
+    BORDER_CYAN,
+    COLOR_THEME,
+    ERROR,
+    FONT_MONO,
+    FONT_SMALL,
+    FONT_TITLE,
+    SUCCESS,
+    TEXT_DIM,
+    TEXT_MAIN,
+    WARNING,
+)
 from .zoom_panel import zoom_in, zoom_out
 from .EdgeDetection_panel import EdgeDetectionPanel
 
@@ -21,22 +43,13 @@ from .EdgeDetection_panel import EdgeDetectionPanel
 # ──────────────────────────────────────────────────────────────
 # Theme
 # ──────────────────────────────────────────────────────────────
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
+ctk.set_appearance_mode(APP_MODE)
+ctk.set_default_color_theme(COLOR_THEME)
 
-ACCENT     = "#1f6aa5"
-BG_DARK    = "#1a1a2e"
-BG_MID     = "#16213e"
-BG_PANEL   = "#0f3460"
-TEXT_MAIN  = "#e0e0e0"
-TEXT_DIM   = "#888888"
-SUCCESS    = "#4caf50"
-WARNING    = "#ff9800"
-
-FONT_TITLE = ("Segoe UI", 13, "bold")
-FONT_LABEL = ("Segoe UI", 11)
-FONT_SMALL = ("Segoe UI", 10)
-FONT_MONO  = ("Courier New", 10)
+ACCENT = ACCENT_CYAN
+BG_DARK = BG_WINDOW
+BG_MID = BG_SURFACE
+BG_PANEL = BG_DIVIDER
 
 
 # ──────────────────────────────────────────────────────────────
@@ -64,6 +77,7 @@ class CloseImageDialog(ctk.CTkToplevel):
 
     def __init__(self, parent, on_confirm):
         super().__init__(parent)
+        self.configure(fg_color=BG_SURFACE)
         self.title("Close Image")
         self.geometry("420x180")
         self.resizable(False, False)
@@ -76,6 +90,7 @@ class CloseImageDialog(ctk.CTkToplevel):
             self,
             text="Are you sure you want to close. Your changes will not be saved",
             font=FONT_TITLE,
+            text_color=TEXT_MAIN,
             wraplength=360,
             justify="center",
         ).pack(padx=20, pady=(24, 18))
@@ -84,9 +99,9 @@ class CloseImageDialog(ctk.CTkToplevel):
         btn_row.pack(pady=8)
 
         ctk.CTkButton(btn_row, text="Close", width=120,
-                      command=self._dismiss).pack(side="left", padx=8)
+                      fg_color=ACCENT_BLUE, command=self._dismiss).pack(side="left", padx=8)
         ctk.CTkButton(btn_row, text="Confirm", width=120,
-                      fg_color="#8b2500", command=self._confirm).pack(side="left", padx=8)
+                      fg_color=ERROR, command=self._confirm).pack(side="left", padx=8)
 
         self.protocol("WM_DELETE_WINDOW", self._dismiss)
 
@@ -108,6 +123,7 @@ class MainWindow(ctk.CTk):
 
     def __init__(self):
         super().__init__()
+        self.configure(fg_color=BG_WINDOW)
         self.title(" Clinical Image Analysis & Enhancement Workbench")
         self.geometry("1380x820")
         self.minsize(1000, 650)
@@ -140,22 +156,29 @@ class MainWindow(ctk.CTk):
     # ── Top bar ──────────────────────────────────────────
 
     def _build_top_bar(self):
-        bar = ctk.CTkFrame(self, height=52, corner_radius=0)
+        bar = ctk.CTkFrame(
+            self,
+            height=52,
+            corner_radius=0,
+            fg_color=BG_SIDEBAR,
+            border_width=1,
+            border_color=BORDER_CYAN,
+        )
         bar.grid(row=0, column=0, columnspan=3, sticky="ew")
         bar.grid_propagate(False)
 
         # Logo / title
         ctk.CTkLabel(bar, text="  Clinical Image Workbench",
-                     font=("Segoe UI", 14, "bold")).pack(side="left", padx=15)
+                     font=("Segoe UI", 14, "bold"), text_color=TEXT_MAIN).pack(side="left", padx=15)
 
         # Action buttons
         btn_cfg = dict(width=110, height=34, corner_radius=6)
         ctk.CTkButton(bar, text="  Open",  command=self._open_image,
-                      fg_color=ACCENT,      **btn_cfg).pack(side="left", padx=4, pady=8)
+                      fg_color=ACCENT_CYAN, hover_color="#00869B", **btn_cfg).pack(side="left", padx=4, pady=8)
         ctk.CTkButton(bar, text="  Save",  command=self._save_image,
-                      fg_color="#2d6a4f",   **btn_cfg).pack(side="left", padx=4, pady=8)
+                      fg_color=ACCENT_TEAL, hover_color="#0C6541", **btn_cfg).pack(side="left", padx=4, pady=8)
         ctk.CTkButton(bar, text="✖  Close", command=self._ask_close_image,
-                  fg_color="#8b2500",   **btn_cfg).pack(side="left", padx=4, pady=8)
+                  fg_color=ERROR, hover_color="#9E3E49", **btn_cfg).pack(side="left", padx=4, pady=8)
 
         # Status label (right-aligned)
         self._status_var = tk.StringVar(value="")
@@ -166,7 +189,7 @@ class MainWindow(ctk.CTk):
     # ── Left tools panel ─────────────────────────────────
 
     def _build_left_panel(self):
-        panel = ctk.CTkScrollableFrame(self, width=250, corner_radius=0)
+        panel = ctk.CTkScrollableFrame(self, width=250, corner_radius=0, fg_color=BG_SIDEBAR)
         panel.grid(row=1, column=0, sticky="nsew")
 
         ###### Zoom ######
@@ -238,12 +261,12 @@ class MainWindow(ctk.CTk):
     # ── Center image canvas ───────────────────────────────
 
     def _build_center_panel(self):
-        container = ctk.CTkFrame(self, corner_radius=0)
+        container = ctk.CTkFrame(self, corner_radius=0, fg_color=BG_WINDOW)
         container.grid(row=1, column=1, sticky="nsew")
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
 
-        self._canvas = tk.Canvas(container, bg=BG_DARK,
+        self._canvas = tk.Canvas(container, bg=BG_CANVAS,
                                  highlightthickness=0, cursor="crosshair")
         self._canvas.grid(row=0, column=0, sticky="nsew")
 
@@ -270,12 +293,20 @@ class MainWindow(ctk.CTk):
     # ── Right info panel ──────────────────────────────────
 
     def _build_right_panel(self):
-        panel = ctk.CTkScrollableFrame(self, width=240, corner_radius=0)
+        panel = ctk.CTkScrollableFrame(self, width=240, corner_radius=0, fg_color=BG_SIDEBAR)
         panel.grid(row=1, column=2, sticky="nsew")
 
         self._section_title(panel, "IMAGE METADATA")
-        self._meta_box = ctk.CTkTextbox(panel, height=220, font=FONT_MONO,
-                                        state="disabled")
+        self._meta_box = ctk.CTkTextbox(
+            panel,
+            height=220,
+            font=FONT_MONO,
+            state="disabled",
+            fg_color=BG_TEXTBOX,
+            text_color=TEXT_MAIN,
+            border_width=1,
+            border_color=BORDER_CYAN,
+        )
         self._meta_box.pack(fill="x", padx=8, pady=4)
         self._update_metadata_display()
 
@@ -291,15 +322,15 @@ class MainWindow(ctk.CTk):
     # ──────────────────────────────────────────────────────
 
     def _section_title(self, parent, text):
-        ctk.CTkLabel(parent, text=text, font=FONT_TITLE).pack(
+        ctk.CTkLabel(parent, text=text, font=FONT_TITLE, text_color=TEXT_MAIN).pack(
             anchor="w", padx=12, pady=(12, 2))
 
     def _divider(self, parent):
-        ctk.CTkFrame(parent, height=2, fg_color=BG_PANEL).pack(
+        ctk.CTkFrame(parent, height=2, fg_color=BORDER_CYAN).pack(
             fill="x", padx=8, pady=8)
 
     def _set_status(self, msg, kind="info"):
-        colors = {"info": TEXT_DIM, "ok": SUCCESS, "warn": WARNING, "error": "#e53935"}
+        colors = {"info": TEXT_DIM, "ok": SUCCESS, "warn": WARNING, "error": ERROR}
         self._status_var.set(msg)
         self._status_lbl.configure(text_color=colors.get(kind, TEXT_DIM))
 

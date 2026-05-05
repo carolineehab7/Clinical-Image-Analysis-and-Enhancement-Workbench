@@ -9,24 +9,16 @@ from core.noise import (
     add_speckle_noise,
     add_uniform_noise,
 )
-
-
-FONT_TITLE = ("Segoe UI", 13, "bold")
-FONT_SMALL = ("Segoe UI", 10)
-TEXT_DIM = "#888888"
+from gui.theme import ACCENT_PURPLE, BG_ELEVATED, BORDER_CYAN, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
 
 
 def parse_float(value: str, default: float) -> float:
-    # Parse user input, fall back to default if empty or invalid.
     text = value.strip()
     return float(text) if text else default
 
 
 class NoisePanel:
-    # Left-side panel for adding noise to test image robustness.
-
     def __init__(self, parent, pipeline, on_image_updated, on_pipeline_updated, on_status):
-        # Store refs to the pipeline and callbacks needed to push results.
         self.parent = parent
         self.pipeline = pipeline
         self.on_image_updated = on_image_updated
@@ -35,23 +27,30 @@ class NoisePanel:
         self._build_ui()
 
     def _build_ui(self):
-        # Create the noise type dropdown and parameter inputs.
-        self._section_title("NOISE GENERATION")
+        self._card = ctk.CTkFrame(
+            self.parent,
+            fg_color=BG_ELEVATED,
+            corner_radius=10,
+            border_width=1,
+            border_color=BORDER_CYAN,
+        )
+        self._card.pack(fill="x", padx=10, pady=(0, 8))
 
-        # Dropdown for noise type selection.
-        ctk.CTkLabel(self.parent, text="Noise Type:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
+        self._section_title(self._card, "NOISE GENERATION")
+
+        ctk.CTkLabel(self._card, text="Noise Type:", font=FONT_SMALL, text_color=TEXT_DIM).pack(
+            anchor="w", padx=12
+        )
         self._noise_var = tk.StringVar(value="Gaussian")
         ctk.CTkOptionMenu(
-            self.parent,
+            self._card,
             variable=self._noise_var,
             values=["Gaussian", "Salt & Pepper", "Speckle", "Uniform"],
             command=self._on_noise_change,
             width=226,
         ).pack(padx=12, pady=3)
 
-        # Strength/sigma input (shown for most noise types).
-        self._strength_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
+        self._strength_frame = ctk.CTkFrame(self._card, fg_color="transparent")
         self._strength_label = ctk.CTkLabel(
             self._strength_frame,
             text="Strength / Sigma:",
@@ -59,48 +58,48 @@ class NoisePanel:
             text_color=TEXT_DIM,
         )
         self._strength_label.pack(anchor="w")
-        self._strength_entry = ctk.CTkEntry(self._strength_frame,
-                                         placeholder_text="e.g. 10 or 0.1",
-                                         width=226)
+        self._strength_entry = ctk.CTkEntry(
+            self._strength_frame,
+            placeholder_text="e.g. 10 or 0.1",
+            width=226,
+        )
         self._strength_entry.pack()
 
-        # Salt ratio input (only shown for salt & pepper noise).
-        self._pepper_frame = ctk.CTkFrame(self.parent, fg_color="transparent")
-        ctk.CTkLabel(self._pepper_frame, text="Salt Ratio:",
-                     font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w")
-        self._salt_ratio_entry = ctk.CTkEntry(self._pepper_frame,
-                                              placeholder_text="0.5",
-                                              width=226)
+        self._pepper_frame = ctk.CTkFrame(self._card, fg_color="transparent")
+        ctk.CTkLabel(self._pepper_frame, text="Salt Ratio:", font=FONT_SMALL, text_color=TEXT_DIM).pack(
+            anchor="w"
+        )
+        self._salt_ratio_entry = ctk.CTkEntry(
+            self._pepper_frame,
+            placeholder_text="0.5",
+            width=226,
+        )
         self._salt_ratio_entry.pack()
 
-        # Apply button to add noise to the current image.
         ctk.CTkButton(
-            self.parent,
+            self._card,
             text="▶  Apply Noise",
             command=self._apply_noise,
+            fg_color=ACCENT_PURPLE,
+            hover_color="#9F67D8",
         ).pack(padx=12, pady=6, fill="x")
 
-        # Initialize UI state based on default noise type.
         self._on_noise_change(self._noise_var.get())
         self._divider()
 
-    def _section_title(self, text):
-        # Display a section heading.
-        ctk.CTkLabel(self.parent, text=text, font=FONT_TITLE).pack(
-            anchor="w", padx=12, pady=(12, 2))
+    def _section_title(self, parent, text):
+        ctk.CTkLabel(parent, text=text, font=FONT_TITLE, text_color=TEXT_MAIN).pack(
+            anchor="w", padx=12, pady=(12, 2)
+        )
 
     def _divider(self):
-        # Visual separator line between sections.
-        ctk.CTkFrame(self.parent, height=2, fg_color="#0f3460").pack(
-            fill="x", padx=8, pady=8)
+        ctk.CTkFrame(self.parent, height=2, fg_color=BORDER_CYAN).pack(fill="x", padx=8, pady=8)
 
     def _on_noise_change(self, choice):
-        # Show/hide relevant inputs based on selected noise type.
         self._strength_frame.pack_forget()
         self._pepper_frame.pack_forget()
 
         if choice == "Salt & Pepper":
-            # Salt & pepper needs both amount and ratio inputs.
             self._strength_label.configure(text="Noise Amount:")
             self._strength_entry.configure(placeholder_text="0.05")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
@@ -110,21 +109,18 @@ class NoisePanel:
             self._salt_ratio_entry.delete(0, "end")
             self._salt_ratio_entry.insert(0, "0.5")
         elif choice == "Gaussian":
-            # Gaussian just needs sigma.
             self._strength_label.configure(text="Strength / Sigma:")
             self._strength_entry.configure(placeholder_text="10")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
             self._strength_entry.delete(0, "end")
             self._strength_entry.insert(0, "10")
         elif choice == "Speckle":
-            # Speckle uses a smaller sigma value.
             self._strength_label.configure(text="Strength / Sigma:")
             self._strength_entry.configure(placeholder_text="0.1")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
             self._strength_entry.delete(0, "end")
             self._strength_entry.insert(0, "0.1")
         elif choice == "Uniform":
-            # Uniform ranges from low to high.
             self._strength_label.configure(text="Noise Strength:")
             self._strength_entry.configure(placeholder_text="20")
             self._strength_frame.pack(padx=12, pady=2, fill="x")
@@ -132,7 +128,6 @@ class NoisePanel:
             self._strength_entry.insert(0, "20")
 
     def _apply_noise(self):
-        # Add selected noise type to current image and update pipeline.
         if self.pipeline.is_empty:
             messagebox.showwarning("No Image", "Load an image first.")
             return
@@ -142,7 +137,6 @@ class NoisePanel:
 
         try:
             if choice == "Gaussian":
-                # Gaussian: normally distributed noise with mean 0 and sigma.
                 sigma = parse_float(self._strength_entry.get(), 10.0)
                 if sigma <= 0:
                     raise ValueError("Sigma must be positive.")
@@ -150,7 +144,6 @@ class NoisePanel:
                 desc = f"Gaussian Noise σ={sigma}"
 
             elif choice == "Salt & Pepper":
-                # Random white and black pixels at given density/ratio.
                 amount = parse_float(self._strength_entry.get(), 0.05)
                 salt_ratio = parse_float(self._salt_ratio_entry.get(), 0.5)
                 if not 0 <= amount <= 1:
@@ -161,7 +154,6 @@ class NoisePanel:
                 desc = f"Salt & Pepper Noise amount={amount}, salt={salt_ratio}"
 
             elif choice == "Speckle":
-                # Multiplicative noise (scales pixel value).
                 sigma = parse_float(self._strength_entry.get(), 0.1)
                 if sigma <= 0:
                     raise ValueError("Sigma must be positive.")
@@ -169,7 +161,6 @@ class NoisePanel:
                 desc = f"Speckle Noise σ={sigma}"
 
             elif choice == "Uniform":
-                # Random noise in a ± range.
                 strength = parse_float(self._strength_entry.get(), 20.0)
                 if strength < 0:
                     raise ValueError("Noise strength must be non-negative.")
@@ -186,7 +177,6 @@ class NoisePanel:
             messagebox.showerror("Noise Error", str(exc))
             return
 
-        # Push result to pipeline and trigger UI updates.
         self.pipeline.push(result, desc)
         self.on_image_updated(result)
         self.on_pipeline_updated()

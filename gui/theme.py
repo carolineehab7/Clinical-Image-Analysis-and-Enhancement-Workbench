@@ -1,0 +1,31 @@
+"""Shared colors and typography for the application theme."""
+
+APP_MODE = "dark"
+COLOR_THEME = "dark-blue"
+
+BG_WINDOW = "#111827"
+BG_SIDEBAR = "#131D2A"
+BG_SURFACE = "#182131"
+BG_ELEVATED = "#1D2838"
+BG_TEXTBOX = "#223042"
+BG_CANVAS = "#121A25"
+BG_DIVIDER = "#35465C"
+
+TEXT_MAIN = "#F0F6FC"
+TEXT_DIM = "#B0BCCB"
+
+ACCENT_CYAN = "#009AB3"
+ACCENT_BLUE = "#4D7CFF"
+ACCENT_PURPLE = "#A855F7"
+ACCENT_TEAL = "#0F7A4E"
+
+BORDER_CYAN = ACCENT_CYAN
+
+SUCCESS = "#0F7A4E"
+WARNING = "#F59E0B"
+ERROR = "#B94A57"
+
+FONT_TITLE = ("Segoe UI", 13, "bold")
+FONT_LABEL = ("Segoe UI", 11)
+FONT_SMALL = ("Segoe UI", 10)
+FONT_MONO = ("Courier New", 10)

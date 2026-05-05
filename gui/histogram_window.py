@@ -2,17 +2,16 @@ import tkinter as tk
 
 import customtkinter as ctk
 import numpy as np
+from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_CANVAS, BG_SURFACE, BORDER_CYAN, FONT_TITLE, TEXT_DIM, TEXT_MAIN
 
-
-FONT_TITLE = ("Segoe UI", 13, "bold")
-TEXT_DIM = "#888888"
-BG_MID = "#16213e"
+BG_MID = BG_SURFACE
 
 
 class HistogramWindow(ctk.CTkToplevel):
     def __init__(self, parent, histogram, title="Image Histogram", histogram_after=None, title_after=None):
         super().__init__(parent)
         self.title(title)
+        self.configure(fg_color=BG_SURFACE)
         self._hist_before = np.asarray(histogram, dtype=np.int64)
         self._hist_after = np.asarray(histogram_after, dtype=np.int64) if histogram_after is not None else None
         self._scale_var = tk.StringVar(value="Log")
@@ -27,7 +26,7 @@ class HistogramWindow(ctk.CTkToplevel):
         
         self.resizable(True, True)
 
-        ctk.CTkLabel(self, text=title, font=FONT_TITLE).pack(pady=(10, 6))
+        ctk.CTkLabel(self, text=title, font=FONT_TITLE, text_color=TEXT_MAIN).pack(pady=(10, 6))
 
         self._summary_var = tk.StringVar()
         ctk.CTkLabel(self, textvariable=self._summary_var, text_color=TEXT_DIM).pack(pady=(0, 8))
@@ -43,33 +42,33 @@ class HistogramWindow(ctk.CTkToplevel):
             width=180,
         ).pack(side="left", padx=8)
 
-        frame = ctk.CTkFrame(self)
+        frame = ctk.CTkFrame(self, fg_color=BG_SURFACE, border_width=1, border_color=BORDER_CYAN)
         frame.pack(fill="both", expand=True, padx=12, pady=12)
 
         if histogram_after is not None:
             # Side-by-side comparison
-            left_frame = ctk.CTkFrame(frame)
+            left_frame = ctk.CTkFrame(frame, fg_color=BG_SURFACE, border_width=1, border_color=BORDER_CYAN)
             left_frame.pack(side="left", fill="both", expand=True, padx=5)
             
-            right_frame = ctk.CTkFrame(frame)
+            right_frame = ctk.CTkFrame(frame, fg_color=BG_SURFACE, border_width=1, border_color=BORDER_CYAN)
             right_frame.pack(side="right", fill="both", expand=True, padx=5)
             
             # Left: original
-            ctk.CTkLabel(left_frame, text="Before Equalization", font=("Segoe UI", 11, "bold")).pack(pady=4)
-            self._canvas_before = tk.Canvas(left_frame, bg=BG_MID, highlightthickness=0)
+            ctk.CTkLabel(left_frame, text="Before Equalization", font=("Segoe UI", 11, "bold"), text_color=TEXT_MAIN).pack(pady=4)
+            self._canvas_before = tk.Canvas(left_frame, bg=BG_CANVAS, highlightthickness=0)
             self._canvas_before.pack(fill="both", expand=True, padx=5, pady=5)
             self._canvas_before.bind("<Configure>", lambda _e: self._redraw())
             
             # Right: after
-            ctk.CTkLabel(right_frame, text=title_after or "After Equalization", font=("Segoe UI", 11, "bold")).pack(pady=4)
-            self._canvas_after = tk.Canvas(right_frame, bg=BG_MID, highlightthickness=0)
+            ctk.CTkLabel(right_frame, text=title_after or "After Equalization", font=("Segoe UI", 11, "bold"), text_color=TEXT_MAIN).pack(pady=4)
+            self._canvas_after = tk.Canvas(right_frame, bg=BG_CANVAS, highlightthickness=0)
             self._canvas_after.pack(fill="both", expand=True, padx=5, pady=5)
             self._canvas_after.bind("<Configure>", lambda _e: self._redraw())
             
             self._draw_histogram_comparison(self._hist_before, self._hist_after)
         else:
             # Single histogram
-            self._canvas = tk.Canvas(frame, bg=BG_MID, highlightthickness=0)
+            self._canvas = tk.Canvas(frame, bg=BG_CANVAS, highlightthickness=0)
             self._canvas.pack(fill="both", expand=True, padx=10, pady=10)
             self._canvas.bind("<Configure>", lambda _e: self._redraw())
             self._draw_histogram(self._hist_before)
@@ -91,7 +90,7 @@ class HistogramWindow(ctk.CTkToplevel):
         bottom = height - 50
         right = width - 30
 
-        self._canvas.create_rectangle(left, top, right, bottom, outline="#3a4a5a", width=2)
+        self._canvas.create_rectangle(left, top, right, bottom, outline=BORDER_CYAN, width=2)
 
         max_count = int(histogram.max()) if histogram.size else 1
         max_count = max(max_count, 1)
@@ -117,7 +116,7 @@ class HistogramWindow(ctk.CTkToplevel):
             x0 = left + i * bin_width
             x1 = left + (i + 1) * bin_width
             y0 = bottom - bar_height
-            self._canvas.create_rectangle(x0, y0, x1, bottom, fill="#1f6aa5", outline="")
+            self._canvas.create_rectangle(x0, y0, x1, bottom, fill=ACCENT_CYAN, outline="")
 
         # X-axis labels and ticks
         tick_positions = [0, 64, 128, 192, 255]
@@ -140,14 +139,14 @@ class HistogramWindow(ctk.CTkToplevel):
         self._draw_single_histogram_on_canvas(
             self._canvas_before, 
             histogram_before,
-            color="#1f6aa5"
+            color=ACCENT_CYAN
         )
         
         # Draw after on right canvas
         self._draw_single_histogram_on_canvas(
             self._canvas_after,
             histogram_after,
-            color="#2ecc71"
+            color=ACCENT_PURPLE
         )
         
         # Update summary
@@ -176,7 +175,7 @@ class HistogramWindow(ctk.CTkToplevel):
         bottom = height - 50
         right = width - 30
 
-        canvas.create_rectangle(left, top, right, bottom, outline="#3a4a5a", width=2)
+        canvas.create_rectangle(left, top, right, bottom, outline=BORDER_CYAN, width=2)
 
         max_count = int(histogram.max()) if histogram.size else 1
         max_count = max(max_count, 1)

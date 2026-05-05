@@ -8,10 +8,9 @@ from PIL import Image, ImageTk
 import numpy as np
 
 from core.Sobel import sobel_filter
+from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_ELEVATED, BG_SURFACE, BORDER_CYAN, FONT_SMALL, FONT_TITLE, TEXT_DIM, TEXT_MAIN
 
-FONT_TITLE = ("Segoe UI", 13, "bold")
-FONT_SMALL = ("Segoe UI", 10)
-BG_MID = "#16213e"
+BG_MID = BG_SURFACE
 
 
 def _array_to_pil(arr: np.ndarray) -> Image.Image:
@@ -31,11 +30,12 @@ class EdgeResultsWindow(ctk.CTkToplevel):
         self.title(f"{detector_name} Edge Detection Results")
         self.geometry("900x380")
         self.resizable(False, False)
+        self.configure(fg_color=BG_SURFACE)
 
         ctk.CTkLabel(self, text=f"{detector_name} Edge Detection",
-                     font=FONT_TITLE).pack(pady=8)
+                 font=FONT_TITLE, text_color=TEXT_MAIN).pack(pady=8)
 
-        frame = ctk.CTkFrame(self)
+        frame = ctk.CTkFrame(self, fg_color=BG_SURFACE)
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         thumb_size = (260, 260)
@@ -43,10 +43,10 @@ class EdgeResultsWindow(ctk.CTkToplevel):
 
         self._photos = []
         for label_text, arr in images:
-            col = ctk.CTkFrame(frame)
+            col = ctk.CTkFrame(frame, fg_color=BG_SURFACE)
             col.pack(side="left", expand=True, fill="both", padx=5, pady=5)
 
-            ctk.CTkLabel(col, text=label_text, font=FONT_SMALL).pack(pady=3)
+            ctk.CTkLabel(col, text=label_text, font=FONT_SMALL, text_color=TEXT_MAIN).pack(pady=3)
 
             pil = _array_to_pil(arr).resize(thumb_size, Image.NEAREST)
             photo = ImageTk.PhotoImage(pil)
@@ -69,34 +69,47 @@ class EdgeDetectionPanel:
     
     #UI
     def _build_ui(self):
-        ctk.CTkLabel(self.parent, text="EDGE DETECTION", font=FONT_TITLE).pack(
+        self._card = ctk.CTkFrame(
+            self.parent,
+            fg_color=BG_ELEVATED,
+            corner_radius=10,
+            border_width=1,
+            border_color=BORDER_CYAN,
+        )
+        self._card.pack(fill="x", padx=10, pady=(0, 8))
+
+        ctk.CTkLabel(self._card, text="EDGE DETECTION", font=FONT_TITLE, text_color=TEXT_MAIN).pack(
             anchor="w", padx=12, pady=(12, 2)
         )
 
-        ctk.CTkLabel(self.parent, text="Detector:", font=FONT_SMALL,
-                     text_color="#888888").pack(anchor="w", padx=12)
+        ctk.CTkLabel(self._card, text="Detector:", font=FONT_SMALL,
+                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self.detector_var = tk.StringVar(value="Sobel")
-        ctk.CTkOptionMenu(self.parent, variable=self.detector_var,
+        ctk.CTkOptionMenu(self._card, variable=self.detector_var,
                           values=["Sobel"], width=226).pack(padx=12, pady=3)
 
-        ctk.CTkLabel(self.parent, text="Apply to Pipeline:", font=FONT_SMALL,
-                     text_color="#888888").pack(anchor="w", padx=12)
+        ctk.CTkLabel(self._card, text="Apply to Pipeline:", font=FONT_SMALL,
+                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self.apply_var = tk.StringVar(value="Magnitude (Combined)")
-        ctk.CTkOptionMenu(self.parent, variable=self.apply_var,
+        ctk.CTkOptionMenu(self._card, variable=self.apply_var,
                           values=["Horizontal (Gx)", "Vertical (Gy)", "Magnitude (Combined)"],
                           width=226).pack(padx=12, pady=3)
 
-        edge_row = ctk.CTkFrame(self.parent, fg_color="transparent")
+        edge_row = ctk.CTkFrame(self._card, fg_color="transparent")
         edge_row.pack(fill="x", padx=12, pady=4)
         ctk.CTkButton(edge_row, text="▶  Apply", width=107,
-                      command=self._apply_edge).pack(side="left", padx=2)
+                      command=self._apply_edge,
+                      fg_color=ACCENT_CYAN,
+                      hover_color="#00869B").pack(side="left", padx=2)
         ctk.CTkButton(edge_row, text=" All 3", width=107,
-                      command=self._show_all_edges).pack(side="right", padx=2)
+                      command=self._show_all_edges,
+                      fg_color=ACCENT_PURPLE,
+                      hover_color="#9F67D8").pack(side="right", padx=2)
 
         self._divider()
 
     def _divider(self):
-        ctk.CTkFrame(self.parent, height=2, fg_color="#0f3460").pack(fill="x", padx=8, pady=8)
+        ctk.CTkFrame(self._card, height=2, fg_color=BORDER_CYAN).pack(fill="x", padx=8, pady=8)
 
     # calculation
     def _run_edge_detection(self):
