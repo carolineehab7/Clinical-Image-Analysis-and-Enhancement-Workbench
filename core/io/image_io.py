@@ -100,95 +100,33 @@ def _load_dicom(filepath: str):
     return image_array, metadata # returns dicom img after normalization and the metadata to the GUI
 
 
-
-def _load_jpeg(filepath: str):
-    """Load JPEG image."""
-    img = Image.open(filepath)  #opens jpeg file using pillow
-    img.load()    #forces img data to be loaded into memory
-    arr = np.array(img.convert('RGB') if img.mode not in ('L', 'RGB') else img, dtype=np.uint8)   #coverts img to numpy array
-    h, w = arr.shape[:2]
-    metadata = {
-        'Format':       'JPEG',
-        'Width':        str(w),
-        'Height':       str(h),
-        'Bit Depth':    '8',
-        'Modality':     'N/A',
-        'Patient Name': 'N/A',
-        'Patient Age':  'N/A',
-        'Body Part':    'N/A',
-        'Study Date':   'N/A',
-        'Institution':  'N/A',
-    }
-    return arr, metadata  #returns jpeg img as numpy array and metadats dictionary
-
-
-
-def _load_bmp(filepath: str):
-    """Load BMP image."""
-    img = Image.open(filepath)
-    img.load()
-    arr = np.array(img.convert('RGB') if img.mode not in ('L', 'RGB') else img, dtype=np.uint8)
-    h, w = arr.shape[:2]
-    metadata = {
-        'Format':       'BMP',
-        'Width':        str(w),
-        'Height':       str(h),
-        'Bit Depth':    '8',
-        'Modality':     'N/A',
-        'Patient Name': 'N/A',
-        'Patient Age':  'N/A',
-        'Body Part':    'N/A',
-        'Study Date':   'N/A',
-        'Institution':  'N/A',
-    }
-    return arr, metadata
-
-
-
-def _load_pil(filepath: str, fmt: str):
-    """Generic PIL loader as fallback."""
-    img = Image.open(filepath)
-    img.load()
-    arr = np.array(img, dtype=np.uint8)
-    h, w = arr.shape[:2]
-    metadata = {
-        'Format':       fmt,
-        'Width':        str(w),
-        'Height':       str(h),
-        'Bit Depth':    '8',
-        'Modality':     'N/A',
-        'Patient Name': 'N/A',
-        'Patient Age':  'N/A',
-        'Body Part':    'N/A',
-        'Study Date':   'N/A',
-        'Institution':  'N/A',
-    }
-    return arr, metadata
-
-
-
-def save_image(image_array: np.ndarray, filepath: str) -> None:
+def save_image(image: np.ndarray, filepath: str) -> None:
     """
-    Save a processed image to disk.
-    Automatically infers format from extension. Supports PNG, JPEG, BMP, TIFF.
+    Save an image to disk.
+    
+    Arguments:
+        image: Input array (uint8) that will be saved.
+        filepath: Output file path.
     """
-    if image_array is None:  #checks if there is img
-        raise ValueError("No image data to save.")
-
-    # Ensure uint8
-    if image_array.dtype != np.uint8:  #checks img is from 0 to 255
-        img_data = np.clip(image_array, 0, 255).astype(np.uint8)
+    if not isinstance(image, np.ndarray):
+        raise ValueError("Image must be a NumPy array.")
+    
+    # Ensure the image is uint8
+    if image.dtype != np.uint8:
+        image = np.clip(image, 0, 255).astype(np.uint8)
+    
+    # Convert to PIL Image and save
+    if image.ndim == 2:
+        # Grayscale
+        pil_image = Image.fromarray(image, mode='L')
+    elif image.ndim == 3 and image.shape[2] == 3:
+        # RGB
+        pil_image = Image.fromarray(image, mode='RGB')
+    elif image.ndim == 3 and image.shape[2] == 4:
+        # RGBA
+        pil_image = Image.fromarray(image, mode='RGBA')
     else:
-        img_data = image_array.copy()     #if img is already 0 to 255 it just makes a copy 
+        raise ValueError(f"Unsupported image shape: {image.shape}")
+    
+    pil_image.save(filepath)
 
-    # Convert numpy array to PIL Image
-    if img_data.ndim == 2:          #checks if img is grayscale
-        pil_img = Image.fromarray(img_data, mode='L')  # converts grayscale numpy array into a PIL image
-    elif img_data.ndim == 3 and img_data.shape[2] == 3:  #checks if img is RGB
-        pil_img = Image.fromarray(img_data, mode='RGB')
-    elif img_data.ndim == 3 and img_data.shape[2] == 4:  #checks if img is RGBA
-        pil_img = Image.fromarray(img_data, mode='RGBA')
-    else:
-        raise ValueError(f"Unsupported image shape for saving: {img_data.shape}")
-
-    pil_img.save(filepath)

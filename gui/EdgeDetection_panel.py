@@ -7,7 +7,7 @@ import customtkinter as ctk
 from PIL import Image, ImageTk
 import numpy as np
 
-from core.Sobel import sobel_filter
+from core.filters import sobel_filter
 from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_ELEVATED, BG_SURFACE, BORDER_CYAN, FONT_SMALL, FONT_TITLE, TEXT_DIM, TEXT_MAIN
 
 BG_MID = BG_SURFACE

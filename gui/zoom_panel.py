@@ -1,5 +1,5 @@
 from tkinter import messagebox
-from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
+from core.transforms import nearest_neighbor_zoom, bilinear_zoom
 
 def do_zoom(self, factor: float):
     if self.pipeline.is_empty:

@@ -1,7 +1,7 @@
 import numpy as np
-from .RGB_to_gray import RGB_to_gray
-from core.convolution import _core_single_conv
-from .normalization import normalize
+from .convolution import _core_single_conv
+from ..enhancement.color_conversion import RGB_to_gray
+from ..enhancement.normalization import normalize
 
 def sobel_filter(image: np.ndarray):
     gray = RGB_to_gray(image)

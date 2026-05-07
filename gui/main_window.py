@@ -5,11 +5,11 @@ import numpy as np
 from PIL import Image, ImageTk
 import customtkinter as ctk
 
-from core.image_io import load_image, save_image
+from core.io import load_image, save_image
 from core.pipeline import Pipeline
-from core.interpolation import nearest_neighbor_zoom, bilinear_zoom
-from core.filters import (box_smoothing_filter, gaussian_smoothing_filter,)
-from core.histogram import compute_histogram, local_histogram_equalization
+from core.transforms import nearest_neighbor_zoom, bilinear_zoom
+from core.filters import box_smoothing_filter, gaussian_smoothing_filter
+from core.enhancement import compute_histogram, local_histogram_equalization
 from gui.filter_panel import FilterPanel
 from gui.histogram_window import HistogramWindow
 from gui.noise_panel import NoisePanel

@@ -3,7 +3,7 @@ from tkinter import messagebox
 
 import customtkinter as ctk
 
-from core.noise import (
+from core.transforms import (
     add_gaussian_noise,
     add_salt_pepper_noise,
     add_speckle_noise,

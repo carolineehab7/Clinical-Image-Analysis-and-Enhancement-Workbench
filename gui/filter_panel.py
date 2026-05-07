@@ -4,8 +4,7 @@ from tkinter import messagebox
 
 import customtkinter as ctk
 
-from core.filters import box_smoothing_filter, gaussian_smoothing_filter
-from core.Median import median_filter
+from core.filters import box_smoothing_filter, gaussian_smoothing_filter, median_filter
 from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_DIVIDER, BG_ELEVATED, BG_SURFACE, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
 
 

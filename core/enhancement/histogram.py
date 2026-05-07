@@ -1,5 +1,5 @@
 import numpy as np
-from core.RGB_to_gray import RGB_to_gray
+from .color_conversion import RGB_to_gray
 
 # Computes the histogram of a grayscale image
 def compute_histogram(image: np.ndarray) -> np.ndarray:

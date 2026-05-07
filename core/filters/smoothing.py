@@ -1,6 +1,6 @@
 "Building smoothing Linear filters from scratch"
 import numpy as np
-from core.convolution import MainConv
+from .convolution import MainConv
 
 def avg_kernel(size: int) -> np.ndarray:
     """
