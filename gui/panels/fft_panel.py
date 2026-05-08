@@ -44,7 +44,7 @@ class FFTPanel:
         except Exception:
             pass
 
-        from gui.spectrum_window import SpectrumWindow
+        from gui.windows.spectrum_window import SpectrumWindow
         root = self._parent.winfo_toplevel()
         self._win = SpectrumWindow(
             root,

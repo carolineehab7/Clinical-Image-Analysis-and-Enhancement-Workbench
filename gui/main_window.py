@@ -12,10 +12,10 @@ from core.enhancement import (
     local_histogram_equalization,
     local_histogram_equalization_interpolated,
 )
-from gui.filter_panel import FilterPanel
-from gui.histogram_window import HistogramWindow
-from gui.noise_panel import NoisePanel
-from gui.pipeline_panel import PipelinePanel
+from gui.panels.filter_panel import FilterPanel
+from gui.windows.histogram_window import HistogramWindow
+from gui.panels.noise_panel import NoisePanel
+from gui.panels.pipeline_panel import PipelinePanel
 from gui.theme import (
     ACCENT_BLUE,
     ACCENT_CYAN,
@@ -38,10 +38,10 @@ from gui.theme import (
     TEXT_MAIN,
     WARNING,
 )
-from .zoom_panel import zoom_in, zoom_out
-from .EdgeDetection_panel import EdgeDetectionPanel
-from .fft_panel import FFTPanel
-from .roi_panel import ROIPanel
+from .panels.zoom_panel import zoom_in, zoom_out
+from .panels.EdgeDetection_panel import EdgeDetectionPanel
+from .panels.fft_panel import FFTPanel
+from .panels.roi_panel import ROIPanel
 from bonus.morphology_panel import MorphologyPanel
 
 
@@ -784,7 +784,7 @@ class MainWindow(ctk.CTk):
             self._set_status("Draw an ROI on the image first.", "warn")
             return
         from core.analysis.roi import extract_roi
-        from gui.statistics_window import StatisticsWindow
+        from gui.windows.statistics_window import StatisticsWindow
         x0, y0, x1, y1 = self._roi_image_coords
         roi = extract_roi(self.pipeline.current_image, x0, y0, x1, y1)
         if roi is None or roi.size == 0:
