@@ -1,13 +1,13 @@
 import numpy as np
 
 
-def compute_fft(image):
+def compute_fft(image: np.ndarray):
     """Compute 2D FFT on the image.
 
     Returns
     -------
-    F_shifted : ndarray complex128  — centered complex FFT (shared state for notch filtering)
-    mag_display : ndarray uint8     — log-scaled magnitude, normalised to [0, 255] for display
+    F_shifted : ndarray complex128  — centered complex FFT (used for notch filtering)
+    mag_display : ndarray uint8     — log-scaled magnitude normalised to [0,255] for display
     """
     if image.ndim == 3:
         gray = 0.299 * image[..., 0] + 0.587 * image[..., 1] + 0.114 * image[..., 2]
