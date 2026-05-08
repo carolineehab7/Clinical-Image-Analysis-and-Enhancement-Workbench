@@ -1,4 +1,3 @@
-"""ROI drawing controls panel for the left sidebar (Member 3)."""
 import tkinter as tk
 import customtkinter as ctk
 
@@ -7,10 +6,7 @@ from gui.theme import (
     FONT_TITLE, SUCCESS, TEXT_DIM, TEXT_MAIN,
 )
 
-
 class ROIPanel:
-    """Sidebar controls for rubber-band ROI selection on the main canvas."""
-
     def __init__(self, parent, on_toggle_roi_mode, on_clear_roi, on_analyze_roi):
         self._on_toggle  = on_toggle_roi_mode
         self._on_clear   = on_clear_roi
@@ -57,22 +53,22 @@ class ROIPanel:
         ctk.CTkFrame(parent, height=2, fg_color=BORDER_CYAN).pack(
             fill="x", padx=8, pady=8)
 
-    # ── public API ──────────────────────────────────────────────────────
-
+    #makes the active flag
     def set_active(self, active: bool):
         self._active = active
         self._refresh_btn()
 
+    #sets the status text
     def set_status(self, text: str):
         self._status_var.set(text)
 
-    # ── internals ───────────────────────────────────────────────────────
 
     def _toggle(self):
         self._active = not self._active
         self._on_toggle(self._active)
         self._refresh_btn()
 
+    #to update button appearance based on active state
     def _refresh_btn(self):
         if self._active:
             self._draw_btn.configure(
