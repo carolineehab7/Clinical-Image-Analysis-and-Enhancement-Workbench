@@ -357,10 +357,14 @@ class MainWindow(ctk.CTk):
 
         self._divider(panel)
 
-        # Initialize pipeline panel with undo/reset callbacks
-        self._pipeline_panel = PipelinePanel(panel, 
-                                             on_undo=self._undo,
-                                             on_reset=self._reset)
+        # Initialize pipeline panel with undo/redo/reset/save-log callbacks
+        self._pipeline_panel = PipelinePanel(
+            panel,
+            on_undo=self._undo,
+            on_redo=self._redo,
+            on_reset=self._reset,
+            on_save_log=self._save_pipeline_log,
+        )
 
     # ──────────────────────────────────────────────────────
     # UI helpers
@@ -529,6 +533,45 @@ class MainWindow(ctk.CTk):
         self._display_image(img)
         self._update_pipeline_display()
         self._set_status("Undo — reverted to previous step.", "warn")
+
+    def _redo(self):
+        if self.pipeline.is_empty or not self.pipeline.can_redo:
+            return
+        img = self.pipeline.redo()
+        self._display_image(img)
+        self._update_pipeline_display()
+        self._set_status("Redo — re-applied step.", "ok")
+
+    def _save_pipeline_log(self):
+        if self.pipeline.is_empty:
+            self._set_status("No pipeline to save.", "warn")
+            return
+        path = filedialog.asksaveasfilename(
+            title="Save Pipeline Log",
+            defaultextension=".txt",
+            filetypes=[("Text file", "*.txt"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        from datetime import datetime
+        lines = [
+            "Clinical Image Workbench — Pipeline Log",
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "─" * 42,
+        ]
+        for i, step in enumerate(self.pipeline.steps):
+            marker = "▶" if i == self.pipeline.step_count - 1 else " "
+            lines.append(f"{marker} Step {i:>2}: {step}")
+        lines += [
+            "─" * 42,
+            f"Total steps: {self.pipeline.step_count}",
+        ]
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
+            self._set_status(f"Pipeline log saved: {os.path.basename(path)}", "ok")
+        except Exception as exc:
+            messagebox.showerror("Save Error", str(exc))
 
     def _reset(self):
         if self.pipeline.is_empty:

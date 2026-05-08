@@ -1,11 +1,12 @@
 def compute_local_histogram(roi):
-    """Count pixels per intensity level [0..255] without np.histogram."""
-    bins = [0] * 256
-    for px in roi.ravel():
-        v = int(px)
-        if 0 <= v <= 255:
-            bins[v] += 1
-    return bins
+    """Return a 256-bin histogram for the ROI.
+
+    Reuses Phase 1's compute_histogram, which loops over intensity levels
+    from scratch without np.histogram. Converted to a plain list so the
+    rest of Member 4's code is unchanged.
+    """
+    from core.enhancement.histogram import compute_histogram
+    return list(compute_histogram(roi))
 
 
 def compute_mean(roi):

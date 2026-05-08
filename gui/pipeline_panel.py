@@ -1,20 +1,24 @@
 import customtkinter as ctk
 import tkinter as tk
-from gui.theme import ACCENT_BLUE, ACCENT_PURPLE, BG_ELEVATED, BG_TEXTBOX, BORDER_CYAN, FONT_MONO, FONT_SMALL, FONT_TITLE, TEXT_DIM, TEXT_MAIN
+from gui.theme import (
+    ACCENT_BLUE, ACCENT_PURPLE, BG_ELEVATED, BG_TEXTBOX,
+    BORDER_CYAN, FONT_MONO, FONT_SMALL, FONT_TITLE, SUCCESS, TEXT_DIM, TEXT_MAIN,
+)
 
 
 class PipelinePanel:
-    # Right-side panel for Undo/Reset and pipeline history.
-    
-    def __init__(self, parent, on_undo=None, on_reset=None):
-        # Keep callbacks optional so this widget is safe to reuse.
-        self.parent = parent
-        self.on_undo = on_undo or (lambda: None)      # Run when user clicks Undo
-        self.on_reset = on_reset or (lambda: None)    # Run when user clicks Reset
+    """Right-side panel: Undo / Redo / Reset / Save Log + pipeline history."""
+
+    def __init__(self, parent, on_undo=None, on_reset=None,
+                 on_redo=None, on_save_log=None):
+        self.parent      = parent
+        self.on_undo     = on_undo     or (lambda: None)
+        self.on_reset    = on_reset    or (lambda: None)
+        self.on_redo     = on_redo     or (lambda: None)
+        self.on_save_log = on_save_log or (lambda: None)
         self._build_ui()
 
     def _build_ui(self):
-        # Row for Undo and Reset.
         self._card = ctk.CTkFrame(
             self.parent,
             fg_color=BG_ELEVATED,
@@ -24,28 +28,47 @@ class PipelinePanel:
         )
         self._card.pack(fill="x", padx=10, pady=(0, 8))
 
-        btn_row = ctk.CTkFrame(self._card, fg_color="transparent")
-        btn_row.pack(fill="x", padx=12, pady=8)
+        # ── Row 1: Undo | Redo ──
+        row1 = ctk.CTkFrame(self._card, fg_color="transparent")
+        row1.pack(fill="x", padx=12, pady=(8, 2))
 
-        # Undo goes back one step in history.
-        ctk.CTkButton(btn_row, text="↩  Undo", width=110, height=34,
+        ctk.CTkButton(row1, text="↩  Undo", width=110, height=34,
                       command=self.on_undo,
-                      fg_color=ACCENT_PURPLE, hover_color="#9F67D8", corner_radius=6).pack(side="left", padx=2)
+                      fg_color=ACCENT_PURPLE, hover_color="#9F67D8",
+                      corner_radius=6).pack(side="left", padx=2)
 
-        # Reset clears the whole pipeline and returns to the original image.
-        ctk.CTkButton(btn_row, text="↻  Reset", width=110, height=34,
+        self._redo_btn = ctk.CTkButton(
+            row1, text="↪  Redo", width=110, height=34,
+            command=self.on_redo,
+            fg_color=ACCENT_BLUE, hover_color="#3A63CC",
+            corner_radius=6,
+        )
+        self._redo_btn.pack(side="left", padx=2)
+
+        # ── Row 2: Reset | Save Log ──
+        row2 = ctk.CTkFrame(self._card, fg_color="transparent")
+        row2.pack(fill="x", padx=12, pady=(2, 8))
+
+        ctk.CTkButton(row2, text="↻  Reset", width=110, height=34,
                       command=self.on_reset,
-                      fg_color="#B94A57", hover_color="#9E3E49", corner_radius=6).pack(side="left", padx=2)
+                      fg_color="#B94A57", hover_color="#9E3E49",
+                      corner_radius=6).pack(side="left", padx=2)
+
+        ctk.CTkButton(row2, text="💾  Save Log", width=110, height=34,
+                      command=self.on_save_log,
+                      fg_color=SUCCESS, hover_color="#0C6541",
+                      corner_radius=6).pack(side="left", padx=2)
 
         self._divider()
 
-        # Section title and read-only list of applied steps.
-        ctk.CTkLabel(self._card, text="⚙  PIPELINE STEPS", font=FONT_TITLE, text_color=TEXT_MAIN).pack(
-            anchor="w", padx=12, pady=(12, 2))
+        # ── Pipeline history ──
+        ctk.CTkLabel(self._card, text="⚙  PIPELINE STEPS",
+                     font=FONT_TITLE, text_color=TEXT_MAIN).pack(
+                         anchor="w", padx=12, pady=(12, 2))
 
         self._pipe_box = ctk.CTkTextbox(
             self._card,
-            height=350,
+            height=300,
             font=FONT_MONO,
             state="disabled",
             fg_color=BG_TEXTBOX,
@@ -55,31 +78,31 @@ class PipelinePanel:
         )
         self._pipe_box.pack(fill="x", padx=8, pady=4)
 
-        # Small counter for total active steps.
-        ctk.CTkLabel(self._card, text="Step count:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
+        ctk.CTkLabel(self._card, text="Step count:",
+                     font=FONT_SMALL, text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self._step_count_var = tk.StringVar(value="0")
         ctk.CTkLabel(self._card, textvariable=self._step_count_var,
                      font=FONT_TITLE).pack(anchor="w", padx=12)
 
     def _divider(self):
-        # Visual separator between controls and the steps area.
         ctk.CTkFrame(self.parent, height=2, fg_color=BORDER_CYAN).pack(
             fill="x", padx=8, pady=8)
 
     def update_display(self, pipeline):
-        # Refresh the history box after every pipeline change.
+        """Refresh history box and button states after every pipeline change."""
         self._pipe_box.configure(state="normal")
         self._pipe_box.delete("1.0", "end")
 
-        # List steps and mark the current one.
         for i, step in enumerate(pipeline.steps):
             marker = "▶" if i == pipeline.step_count - 1 else "  "
             self._pipe_box.insert("end", f"{marker} {i}. {step}\n")
 
-        # Keep the latest update visible.
         self._pipe_box.see("end")
         self._pipe_box.configure(state="disabled")
-
-        # Sync the numeric step counter.
         self._step_count_var.set(str(pipeline.step_count))
+
+        # Enable/disable Redo based on whether there's anything to redo
+        if pipeline.can_redo:
+            self._redo_btn.configure(state="normal", fg_color=ACCENT_BLUE)
+        else:
+            self._redo_btn.configure(state="disabled", fg_color="#2A3A5C")
