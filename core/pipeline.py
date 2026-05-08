@@ -53,3 +53,12 @@ class Pipeline:
     def current_image(self) -> Optional[np.ndarray]:
         if self._stack:
             return self._stack[-1][0]
+
+    # Public read-only views used by PipelinePanel
+    @property
+    def steps(self) -> list:
+        return [desc for _, desc in self._stack]
+
+    @property
+    def step_count(self) -> int:
+        return len(self._stack)

@@ -38,6 +38,9 @@ from gui.theme import (
 )
 from .zoom_panel import zoom_in, zoom_out
 from .EdgeDetection_panel import EdgeDetectionPanel
+from .fft_panel import FFTPanel
+from .roi_panel import ROIPanel
+from bonus.morphology_panel import MorphologyPanel
 
 
 # ──────────────────────────────────────────────────────────────
@@ -135,6 +138,17 @@ class MainWindow(ctk.CTk):
         self._edge_cache = None          # (gx, gy, mag, detector_name)
         self._zoom_level = 1.0           # Accumulated zoom scale
         self._pipeline_panel = None      # Will be created in _build_layout
+
+        # ROI state (Member 3)
+        self._roi_mode         = False
+        self._roi_start        = None    # canvas coords of mouse-press
+        self._roi_rect_canvas  = None    # canvas rectangle item ID
+        self._roi_image_coords = None    # (x0, y0, x1, y1) in image pixels
+        # Display geometry — updated by _display_image for ROI coordinate mapping
+        self._canvas_img_x0    = 0.0
+        self._canvas_img_y0    = 0.0
+        self._display_scale    = 1.0
+        self._roi_panel        = None    # set in _build_left_panel
 
         self._build_layout()
         self._set_status("Welcome! Open a DICOM, JPEG, or BMP image to begin.", "info")
@@ -258,6 +272,34 @@ class MainWindow(ctk.CTk):
         ctk.CTkButton(panel, text="Before/After HE",
                   command=self._show_histogram_comparison).pack(padx=12, pady=(2, 6), fill="x")
 
+        self._divider(panel)
+
+        # ── FFT & Notch Filter (Members 1 & 2) ───────────────
+        FFTPanel(
+            panel,
+            pipeline=self.pipeline,
+            on_image_updated=self._display_image,
+            on_pipeline_updated=self._update_pipeline_display,
+            on_status=self._set_status,
+        )
+
+        # ── ROI Analysis (Members 3 & 4) ──────────────────────
+        self._roi_panel = ROIPanel(
+            panel,
+            on_toggle_roi_mode=self._set_roi_mode,
+            on_clear_roi=self._clear_roi,
+            on_analyze_roi=self._analyze_roi,
+        )
+
+        # ── Morphological Engine (Bonus) ───────────────────────
+        MorphologyPanel(
+            panel,
+            pipeline=self.pipeline,
+            on_image_updated=self._display_image,
+            on_pipeline_updated=self._update_pipeline_display,
+            on_status=self._set_status,
+        )
+
     # ── Center image canvas ───────────────────────────────
 
     def _build_center_panel(self):
@@ -288,7 +330,10 @@ class MainWindow(ctk.CTk):
             tags="placeholder"
         )
 
-        self._canvas.bind("<Configure>", self._on_canvas_resize)
+        self._canvas.bind("<Configure>",      self._on_canvas_resize)
+        self._canvas.bind("<ButtonPress-1>",   self._on_roi_press)
+        self._canvas.bind("<B1-Motion>",       self._on_roi_drag)
+        self._canvas.bind("<ButtonRelease-1>", self._on_roi_release)
 
     # ── Right info panel ──────────────────────────────────
 
@@ -370,6 +415,15 @@ class MainWindow(ctk.CTk):
                                              max(canvas_w, disp_w),
                                              max(canvas_h, disp_h)))
 
+        # Store display geometry for ROI coordinate mapping
+        self._canvas_img_x0 = cx - disp_w / 2
+        self._canvas_img_y0 = cy - disp_h / 2
+        self._display_scale  = scale
+
+        # Redraw ROI overlay on top of the new image
+        if self._roi_image_coords is not None:
+            self._draw_roi_rectangle()
+
     def _on_canvas_resize(self, _event=None):
         if not self.pipeline.is_empty:
             self._display_image(self.pipeline.current_image)
@@ -425,6 +479,12 @@ class MainWindow(ctk.CTk):
         self._edge_cache = None
         self._zoom_level = 1.0
         self._zoom_lbl.configure(text="Scale: 1.00×")
+        self._roi_mode         = False
+        self._roi_image_coords = None
+        self._roi_rect_canvas  = None
+        if self._roi_panel:
+            self._roi_panel.set_active(False)
+            self._roi_panel.set_status("No ROI selected.")
 
         self._canvas.delete("all")
         self._canvas.create_text(
@@ -477,6 +537,10 @@ class MainWindow(ctk.CTk):
         self._zoom_level = 1.0
         self._zoom_lbl.configure(text="Scale: 1.00×")
         self._edge_cache = None
+        self._roi_image_coords = None
+        self._roi_rect_canvas  = None
+        if self._roi_panel:
+            self._roi_panel.set_status("No ROI selected.")
         self._display_image(img)
         self._update_pipeline_display()
         self._set_status("Reset to original image.", "warn")
@@ -566,3 +630,104 @@ class MainWindow(ctk.CTk):
         """Update the pipeline display via the pipeline panel."""
         if self._pipeline_panel:
             self._pipeline_panel.update_display(self.pipeline)
+
+    # ──────────────────────────────────────────────────────
+    # ROI drawing on main canvas (Member 3)
+    # ──────────────────────────────────────────────────────
+
+    def _set_roi_mode(self, active: bool):
+        self._roi_mode = active
+
+    def _on_roi_press(self, event):
+        if not self._roi_mode or self.pipeline.is_empty:
+            return
+        cx = self._canvas.canvasx(event.x)
+        cy = self._canvas.canvasy(event.y)
+        self._roi_start = (cx, cy)
+        if self._roi_rect_canvas is not None:
+            self._canvas.delete(self._roi_rect_canvas)
+        self._roi_rect_canvas = self._canvas.create_rectangle(
+            cx, cy, cx, cy, outline=ACCENT_CYAN, width=2, dash=(4, 4)
+        )
+
+    def _on_roi_drag(self, event):
+        if not self._roi_mode or self._roi_start is None:
+            return
+        cx = self._canvas.canvasx(event.x)
+        cy = self._canvas.canvasy(event.y)
+        self._canvas.coords(
+            self._roi_rect_canvas,
+            self._roi_start[0], self._roi_start[1], cx, cy,
+        )
+
+    def _on_roi_release(self, event):
+        if not self._roi_mode or self._roi_start is None:
+            return
+        cx = self._canvas.canvasx(event.x)
+        cy = self._canvas.canvasy(event.y)
+        coords = self._canvas_to_image(
+            self._roi_start[0], self._roi_start[1], cx, cy
+        )
+        self._roi_start = None
+        if coords is None:
+            return
+        self._roi_image_coords = coords
+        x0, y0, x1, y1 = coords
+        if self._roi_panel:
+            self._roi_panel.set_status(f"ROI: ({x0},{y0}) → ({x1},{y1})")
+
+    def _canvas_to_image(self, cx0, cy0, cx1, cy1):
+        """Convert canvas pixel coords → image pixel coords, clamped to image bounds."""
+        if self.pipeline.is_empty:
+            return None
+        s = self._display_scale if self._display_scale > 0 else 1.0
+        h, w = self.pipeline.current_image.shape[:2]
+        x0 = max(0, min(w, round((cx0 - self._canvas_img_x0) / s)))
+        y0 = max(0, min(h, round((cy0 - self._canvas_img_y0) / s)))
+        x1 = max(0, min(w, round((cx1 - self._canvas_img_x0) / s)))
+        y1 = max(0, min(h, round((cy1 - self._canvas_img_y0) / s)))
+        return x0, y0, x1, y1
+
+    def _draw_roi_rectangle(self):
+        """Redraw the ROI rectangle on the canvas (called from _display_image)."""
+        if self._roi_image_coords is None:
+            return
+        x0, y0, x1, y1 = self._roi_image_coords
+        s = self._display_scale
+        cx0 = self._canvas_img_x0 + x0 * s
+        cy0 = self._canvas_img_y0 + y0 * s
+        cx1 = self._canvas_img_x0 + x1 * s
+        cy1 = self._canvas_img_y0 + y1 * s
+        self._roi_rect_canvas = self._canvas.create_rectangle(
+            cx0, cy0, cx1, cy1, outline=ACCENT_CYAN, width=2, dash=(4, 4)
+        )
+
+    def _clear_roi(self):
+        self._roi_image_coords = None
+        if self._roi_rect_canvas is not None:
+            self._canvas.delete(self._roi_rect_canvas)
+            self._roi_rect_canvas = None
+        if self._roi_panel:
+            self._roi_panel.set_status("No ROI selected.")
+
+    # ──────────────────────────────────────────────────────
+    # ROI analysis → statistics popup (Members 3 & 4)
+    # ──────────────────────────────────────────────────────
+
+    def _analyze_roi(self):
+        if self.pipeline.is_empty:
+            self._set_status("Load an image first.", "warn")
+            return
+        if self._roi_image_coords is None:
+            self._set_status("Draw an ROI on the image first.", "warn")
+            return
+        from core.analysis.roi import extract_roi
+        from gui.statistics_window import StatisticsWindow
+        x0, y0, x1, y1 = self._roi_image_coords
+        roi = extract_roi(self.pipeline.current_image, x0, y0, x1, y1)
+        if roi is None or roi.size == 0:
+            self._set_status("ROI is empty — draw a larger region.", "warn")
+            return
+        label = f"({x0},{y0})→({x1},{y1})"
+        StatisticsWindow(self, roi, label)
+        self._set_status(f"Analyzing ROI {label}", "ok")

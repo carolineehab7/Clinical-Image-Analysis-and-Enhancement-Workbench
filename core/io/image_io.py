@@ -100,6 +100,41 @@ def _load_dicom(filepath: str):
     return image_array, metadata # returns dicom img after normalization and the metadata to the GUI
 
 
+def _bits_for_mode(mode: str) -> str:
+    return {"1": "1", "L": "8", "P": "8", "RGB": "24", "RGBA": "32",
+            "I": "32", "F": "32"}.get(mode, "?")
+
+
+def _load_pil(filepath: str, fmt: str = "Unknown"):
+    """Generic PIL-based loader. Returns (uint8 array, metadata dict)."""
+    img = Image.open(filepath).convert("RGB") if Image.open(filepath).mode not in ("L", "RGB") else Image.open(filepath)
+    arr = _normalize_to_uint8(np.array(img))
+    h, w = arr.shape[:2]
+    metadata = {
+        "Format":       fmt,
+        "Width":        str(w),
+        "Height":       str(h),
+        "Bit Depth":    f"{_bits_for_mode(img.mode)} bit",
+        "Modality":     "N/A",
+        "Patient Name": "N/A",
+        "Patient Age":  "N/A",
+        "Body Part":    "N/A",
+        "Study Date":   "N/A",
+        "Institution":  "N/A",
+    }
+    return arr, metadata
+
+
+def _load_jpeg(filepath: str):
+    """Load a JPEG image. Returns (uint8 array, metadata dict)."""
+    return _load_pil(filepath, fmt="JPEG")
+
+
+def _load_bmp(filepath: str):
+    """Load a BMP image. Returns (uint8 array, metadata dict)."""
+    return _load_pil(filepath, fmt="BMP")
+
+
 def save_image(image: np.ndarray, filepath: str) -> None:
     """
     Save an image to disk.
