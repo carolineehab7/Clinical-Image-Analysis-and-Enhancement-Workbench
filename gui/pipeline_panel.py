@@ -28,36 +28,34 @@ class PipelinePanel:
         )
         self._card.pack(fill="x", padx=10, pady=(0, 8))
 
-        # ── Row 1: Undo | Redo ──
-        row1 = ctk.CTkFrame(self._card, fg_color="transparent")
-        row1.pack(fill="x", padx=12, pady=(8, 2))
+        # ── 2×2 button grid (equal width) ──
+        btn_frame = ctk.CTkFrame(self._card, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=12, pady=(8, 8))
+        btn_frame.columnconfigure(0, weight=1)
+        btn_frame.columnconfigure(1, weight=1)
 
-        ctk.CTkButton(row1, text="↩  Undo", width=110, height=34,
+        ctk.CTkButton(btn_frame, text="↩  Undo", height=34,
                       command=self.on_undo,
                       fg_color=ACCENT_PURPLE, hover_color="#9F67D8",
-                      corner_radius=6).pack(side="left", padx=2)
+                      corner_radius=6).grid(row=0, column=0, sticky="ew", padx=2, pady=2)
 
         self._redo_btn = ctk.CTkButton(
-            row1, text="↪  Redo", width=110, height=34,
+            btn_frame, text="↪  Redo", height=34,
             command=self.on_redo,
             fg_color=ACCENT_BLUE, hover_color="#3A63CC",
             corner_radius=6,
         )
-        self._redo_btn.pack(side="left", padx=2)
+        self._redo_btn.grid(row=0, column=1, sticky="ew", padx=2, pady=2)
 
-        # ── Row 2: Reset | Save Log ──
-        row2 = ctk.CTkFrame(self._card, fg_color="transparent")
-        row2.pack(fill="x", padx=12, pady=(2, 8))
-
-        ctk.CTkButton(row2, text="↻  Reset", width=110, height=34,
+        ctk.CTkButton(btn_frame, text="↻  Reset", height=34,
                       command=self.on_reset,
                       fg_color="#B94A57", hover_color="#9E3E49",
-                      corner_radius=6).pack(side="left", padx=2)
+                      corner_radius=6).grid(row=1, column=0, sticky="ew", padx=2, pady=2)
 
-        ctk.CTkButton(row2, text="💾  Save Log", width=110, height=34,
+        ctk.CTkButton(btn_frame, text="💾  Save", height=34,
                       command=self.on_save_log,
                       fg_color=SUCCESS, hover_color="#0C6541",
-                      corner_radius=6).pack(side="left", padx=2)
+                      corner_radius=6).grid(row=1, column=1, sticky="ew", padx=2, pady=2)
 
         self._divider()
 
