@@ -7,9 +7,11 @@ import customtkinter as ctk
 
 from core.io import load_image, save_image
 from core.pipeline import Pipeline
-from core.transforms import nearest_neighbor_zoom, bilinear_zoom
-from core.filters import box_smoothing_filter, gaussian_smoothing_filter
-from core.enhancement import compute_histogram, local_histogram_equalization
+from core.enhancement import (
+    compute_histogram,
+    local_histogram_equalization,
+    local_histogram_equalization_interpolated,
+)
 from gui.filter_panel import FilterPanel
 from gui.histogram_window import HistogramWindow
 from gui.noise_panel import NoisePanel
@@ -265,6 +267,16 @@ class MainWindow(ctk.CTk):
         ctk.CTkOptionMenu(panel, variable=self._block_var,
                           values=["4x4", "8x8", "16x16", "32x32"],
                           width=226).pack(padx=12, pady=3)
+
+        ctk.CTkLabel(panel, text="Mode:", font=FONT_SMALL,
+                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
+        self._lhe_mode_var = tk.StringVar(value="Interpolated")
+        ctk.CTkSegmentedButton(
+            panel,
+            values=["Block", "Interpolated"],
+            variable=self._lhe_mode_var,
+            width=226,
+        ).pack(padx=12, pady=3)
 
         ctk.CTkButton(panel, text="▶  Apply Local HE",
                       command=self._apply_local_he).pack(padx=12, pady=6, fill="x")
@@ -598,13 +610,20 @@ class MainWindow(ctk.CTk):
             return
 
         block_size = parse_block_size(self._block_var.get())
-        desc = f"Local Hist. Eq. — block {block_size}×{block_size}"
+        mode = self._lhe_mode_var.get()
+        desc = f"Local Hist. Eq. ({mode}) — block {block_size}×{block_size}"
 
         try:
-            result = self.pipeline.apply(
-                lambda img, b=block_size: local_histogram_equalization(img, b),
-                desc
-            )
+            if mode == "Interpolated":
+                result = self.pipeline.apply(
+                    lambda img, b=block_size: local_histogram_equalization_interpolated(img, b),
+                    desc
+                )
+            else:
+                result = self.pipeline.apply(
+                    lambda img, b=block_size: local_histogram_equalization(img, b),
+                    desc
+                )
         except Exception as exc:
             messagebox.showerror("Histogram Error", str(exc))
             return
