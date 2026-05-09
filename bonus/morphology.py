@@ -111,22 +111,21 @@ def dilate(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
     return result * 255
 
 
-# ─────────────────────────────────────────────
-# Compound operations
-# ─────────────────────────────────────────────
+##### Compound Operations #####
 
-def opening(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
-    """Opening = Erosion → Dilation.  Removes small foreground specks."""
-    return dilate(erode(binary, se), se)
+# opening: Erosion then Dilation
+# Removes small objects, breaks connections
+def opening(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
+    return dilate(erode(binary, structuring_element), structuring_element)
 
+# closing: Dilation then Erosion
+# Fill small holes, connect broken parts
+def closing(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
+    return erode(dilate(binary, structuring_element), structuring_element)
 
-def closing(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
-    """Closing = Dilation → Erosion.  Fills small holes in foreground."""
-    return erode(dilate(binary, se), se)
-
-
-def boundary_extraction(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
-    """Boundary = Original − Eroded.  Outlines anatomical structures."""
-    b = _to_binary(binary)
-    e = _to_binary(erode(binary, se))
-    return np.clip(b - e, 0, 1).astype(np.uint8) * 255
+# boundary extraction: Original - Eroded
+# Outlines structures
+def boundary_extraction(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
+    original_image = _to_binary(binary)
+    eroded_image = _to_binary(erode(binary, structuring_element))
+    return np.clip(original_image - eroded_image, 0, 1).astype(np.uint8) * 255

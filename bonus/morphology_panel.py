@@ -9,7 +9,6 @@ from gui.theme import (
 
 
 class MorphologyPanel:
-    """Bonus: Thresholding + Erosion / Dilation / Opening / Closing / Boundary."""
 
     def __init__(self, parent, pipeline, on_image_updated, on_pipeline_updated, on_status):
         self._pipeline            = pipeline
@@ -72,7 +71,7 @@ class MorphologyPanel:
         ctk.CTkButton(row1, text="Dilate", width=107,
                       command=lambda: self._apply("Dilate")).pack(side="right", padx=2)
 
-        # ── Compound operations ──
+        # opening and closing
         row2 = ctk.CTkFrame(parent, fg_color="transparent")
         row2.pack(fill="x", padx=12, pady=2)
         ctk.CTkButton(row2, text="Opening", width=107,
@@ -82,7 +81,7 @@ class MorphologyPanel:
                       fg_color=SUCCESS, hover_color="#0C6541",
                       command=lambda: self._apply("Closing")).pack(side="right", padx=2)
 
-        # ── Boundary Extraction (extra credit) ──
+        # boundary extraction
         ctk.CTkButton(parent, text="Boundary Extraction",
                       fg_color=ACCENT_PURPLE, hover_color="#7E22CE",
                       command=lambda: self._apply("Boundary")).pack(
@@ -127,14 +126,14 @@ class MorphologyPanel:
             "Boundary": (boundary_extraction,"Boundary Extraction"),
         }
         fn, label = ops[op]
-        se      = self._get_se()
-        se_info = f"{self._se_size_var.get()} {self._se_shape_var.get()}"
+        structuring_element      = self._get_se()
+        structuring_element_info = f"{self._se_size_var.get()} {self._se_shape_var.get()}"
         try:
-            result = fn(self._pipeline.current_image, se)
+            result = fn(self._pipeline.current_image, structuring_element)
         except Exception as exc:
             self._on_status(f"Morphology error: {exc}", "error")
             return
-        desc = f"{label} ({se_info})"
+        desc = f"{label} ({structuring_element_info})"
         self._pipeline.push(result, desc)
         self._on_image_updated(result)
         self._on_pipeline_updated()
