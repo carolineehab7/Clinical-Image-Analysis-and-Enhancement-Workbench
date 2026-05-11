@@ -9,7 +9,6 @@ from core.io import load_image, save_image
 from core.pipeline import Pipeline
 from core.enhancement import (
     compute_histogram,
-    local_histogram_equalization,
     local_histogram_equalization_interpolated,
 )
 from gui.panels.filter_panel import FilterPanel
@@ -287,16 +286,6 @@ class MainWindow(ctk.CTk):
         ctk.CTkOptionMenu(he_card, variable=self._block_var,
                           values=["4x4", "8x8", "16x16", "32x32"],
                           width=226).pack(padx=12, pady=3)
-
-        ctk.CTkLabel(he_card, text="Mode:", font=FONT_SMALL,
-                     text_color=TEXT_DIM).pack(anchor="w", padx=12)
-        self._lhe_mode_var = tk.StringVar(value="Interpolated")
-        ctk.CTkSegmentedButton(
-            he_card,
-            values=["Block", "Interpolated"],
-            variable=self._lhe_mode_var,
-            width=226,
-        ).pack(padx=12, pady=3)
 
         ctk.CTkButton(he_card, text="▶  Apply Local HE",
                       command=self._apply_local_he).pack(padx=12, pady=6, fill="x")
@@ -667,20 +656,13 @@ class MainWindow(ctk.CTk):
             return
 
         block_size = parse_block_size(self._block_var.get())
-        mode = self._lhe_mode_var.get()
-        desc = f"Local Hist. Eq. ({mode}) — block {block_size}×{block_size}"
+        desc = f"Local Hist. Eq. (Interpolated) — block {block_size}×{block_size}"
 
         try:
-            if mode == "Interpolated":
-                result = self.pipeline.apply(
-                    lambda img, b=block_size: local_histogram_equalization_interpolated(img, b),
-                    desc
-                )
-            else:
-                result = self.pipeline.apply(
-                    lambda img, b=block_size: local_histogram_equalization(img, b),
-                    desc
-                )
+            result = self.pipeline.apply(
+                lambda img, b=block_size: local_histogram_equalization_interpolated(img, b),
+                desc
+            )
         except Exception as exc:
             messagebox.showerror("Histogram Error", str(exc))
             return
@@ -697,12 +679,12 @@ class MainWindow(ctk.CTk):
 
         # Get a fresh copy of the current image (don't modify pipeline)
         current_image = self.pipeline.current_image.copy()
-        histogram_before = compute_histogram(current_image)
-        
+        histogram_before = compute_histogram(current_image.flatten().astype("uint8"))
+
         # Apply local histogram equalization with selected block size
         block_size = parse_block_size(self._block_var.get())
         image_equalized = local_histogram_equalization(current_image.copy(), block_size)
-        histogram_after = compute_histogram(image_equalized)
+        histogram_after = compute_histogram(image_equalized.flatten().astype("uint8"))
         
         # Show comparison window
         HistogramWindow(

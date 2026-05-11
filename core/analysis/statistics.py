@@ -6,7 +6,7 @@ def compute_local_histogram(roi):
     rest of Member 4's code is unchanged.
     """
     from core.enhancement.histogram import compute_histogram
-    return list(compute_histogram(roi))
+    return list(compute_histogram(roi.flatten().astype("uint8")))
 
 
 def compute_mean(roi):
