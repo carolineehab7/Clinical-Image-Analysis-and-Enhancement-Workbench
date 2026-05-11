@@ -41,11 +41,6 @@ def compute_fft(image: np.ndarray):
     else:
         raise ValueError("Image must be 2D or 3D.")
 
-    try:
-        gray = gray.astype(np.float64)
-    except (TypeError, ValueError) as exc:
-        raise ValueError("Image must contain numeric values.") from exc
-
     # Guard against NaN/Inf so log scaling stays finite.
     gray = np.nan_to_num(gray, nan=0.0, posinf=0.0, neginf=0.0)
 
