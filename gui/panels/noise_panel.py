@@ -9,7 +9,7 @@ from core.transforms import (
     add_speckle_noise,
     add_uniform_noise,
 )
-from gui.theme import ACCENT_PURPLE, BG_ELEVATED, BORDER_CYAN, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
+from gui.theme import ACCENT_PURPLE, BG_CARD, BORDER_CYAN, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
 
 
 def parse_float(value: str, default: float) -> float:
@@ -29,7 +29,7 @@ class NoisePanel:
     def _build_ui(self):
         self._card = ctk.CTkFrame(
             self.parent,
-            fg_color=BG_ELEVATED,
+            fg_color=BG_CARD,
             corner_radius=10,
             border_width=1,
             border_color=BORDER_CYAN,

@@ -8,7 +8,7 @@ from PIL import Image, ImageTk
 import numpy as np
 
 from core.filters import sobel_filter
-from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_ELEVATED, BG_SURFACE, BORDER_CYAN, FONT_SMALL, FONT_TITLE, TEXT_DIM, TEXT_MAIN
+from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_CARD, BG_SURFACE, BORDER_CYAN, FONT_SMALL, FONT_TITLE, TEXT_DIM, TEXT_MAIN
 
 BG_MID = BG_SURFACE
 
@@ -71,7 +71,7 @@ class EdgeDetectionPanel:
     def _build_ui(self):
         self._card = ctk.CTkFrame(
             self.parent,
-            fg_color=BG_ELEVATED,
+            fg_color=BG_CARD,
             corner_radius=10,
             border_width=1,
             border_color=BORDER_CYAN,

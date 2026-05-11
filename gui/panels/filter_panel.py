@@ -5,7 +5,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 
 from core.filters import box_smoothing_filter, gaussian_smoothing_filter, median_filter
-from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_DIVIDER, BG_ELEVATED, BG_SURFACE, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
+from gui.theme import ACCENT_CYAN, ACCENT_PURPLE, BG_CARD, BG_DIVIDER, BORDER_CYAN, BG_SURFACE, FONT_TITLE, FONT_SMALL, TEXT_DIM, TEXT_MAIN
 
 
 def parse_kernel_size(s: str) -> int:
@@ -33,10 +33,10 @@ class FilterPanel:
 		"Drop down menu to allow user to select filter type and window size"
 		self._card = ctk.CTkFrame(
 			self.parent,
-			fg_color=BG_ELEVATED,
+			fg_color=BG_CARD,
 			corner_radius=10,
-			border_width=1,
-			border_color=BG_DIVIDER,
+			border_width=2,
+			border_color=BORDER_CYAN,
 		)
 		self._card.pack(fill="x", padx=10, pady=(0, 8))
 
@@ -85,7 +85,7 @@ class FilterPanel:
 		self._divider()
 
 	def _section_title(self, parent, text):
-		ctk.CTkLabel(parent, text=text, font=FONT_TITLE, text_color=TEXT_MAIN).pack(
+		ctk.CTkLabel(parent, text=text, font=("Segoe UI", 14, "bold"), text_color=TEXT_MAIN).pack(
 			anchor="w", padx=12, pady=(12, 2))
 
 	def _divider(self):

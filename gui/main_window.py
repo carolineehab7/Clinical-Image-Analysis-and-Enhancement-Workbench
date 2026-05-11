@@ -23,6 +23,8 @@ from gui.theme import (
     APP_MODE,
     BG_CANVAS,
     BG_DIVIDER,
+    BG_ELEVATED,
+    BG_CARD,
     BG_SIDEBAR,
     BG_SURFACE,
     BG_TEXTBOX,
@@ -208,32 +210,49 @@ class MainWindow(ctk.CTk):
         panel = ctk.CTkScrollableFrame(self, width=250, corner_radius=0, fg_color=BG_SIDEBAR)
         panel.grid(row=1, column=0, sticky="nsew")
 
-        ###### Zoom ######
-        self._section_title(panel, " ZOOM")
+        ctk.CTkLabel(panel, text="SECTIONS", font=FONT_SMALL, text_color=TEXT_DIM).pack(
+            anchor="w", padx=12, pady=(10, 2)
+        )
+        self._left_nav_var = tk.StringVar(value="Spatial")
+        ctk.CTkSegmentedButton(
+            panel,
+            values=["Spatial", "Frequency", "Morphology"],
+            variable=self._left_nav_var,
+            command=self._on_left_nav_change,
+        ).pack(fill="x", padx=12, pady=(0, 10))
 
-        ctk.CTkLabel(panel, text="Interpolation Method:", font=FONT_SMALL,
+        self._page_spatial = ctk.CTkFrame(panel, fg_color="transparent")
+        self._page_frequency = ctk.CTkFrame(panel, fg_color="transparent")
+        self._page_morphology = ctk.CTkFrame(panel, fg_color="transparent")
+
+        ###### Zoom ######
+        zoom_card = self._section_card(self._page_spatial)
+        self._section_title(zoom_card, "ZOOM")
+
+        ctk.CTkLabel(zoom_card, text="Interpolation Method:", font=FONT_SMALL,
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self._interp_var = tk.StringVar(value="Nearest Neighbor")
-        ctk.CTkOptionMenu(panel, variable=self._interp_var,
+        ctk.CTkOptionMenu(zoom_card, variable=self._interp_var,
                           values=["Nearest Neighbor", "Bilinear"],
                           width=226).pack(padx=12, pady=3)
 
-        zoom_row = ctk.CTkFrame(panel, fg_color="transparent")
+        zoom_row = ctk.CTkFrame(zoom_card, fg_color="transparent")
         zoom_row.pack(fill="x", padx=12, pady=4)
         ctk.CTkButton(zoom_row, text="＋  Zoom In",  width=107,
                       command=lambda: zoom_in(self)).pack(side="left", padx=2)
         ctk.CTkButton(zoom_row, text="－  Zoom Out", width=107,
                       command=lambda: zoom_out(self)).pack(side="right", padx=2)
 
-        self._zoom_lbl = ctk.CTkLabel(panel, text="Scale: 1.00×",
+        self._zoom_lbl = ctk.CTkLabel(zoom_card, text="Scale: 1.00×",
                                       font=FONT_SMALL, text_color=TEXT_DIM)
         self._zoom_lbl.pack(pady=2)
 
-        self._divider(panel)
+        # Group: Spatial filters
+        self._group_title(self._page_spatial, "SPATIAL FILTERS")
 
         # ── Smoothing Filters ────────────
         self._filter_panel = FilterPanel(
-            panel,
+            self._page_spatial,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
             on_pipeline_updated=self._update_pipeline_display,
@@ -242,7 +261,7 @@ class MainWindow(ctk.CTk):
 
          ###### Edge Detection ######
         self._edge_panel = EdgeDetectionPanel(
-            panel,
+            self._page_spatial,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
             on_pipeline_updated=self._update_pipeline_display,
@@ -251,7 +270,7 @@ class MainWindow(ctk.CTk):
 
         # ── Noise Generation ─────────────────────────────
         self._noise_panel = NoisePanel(
-            panel,
+            self._page_spatial,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
             on_pipeline_updated=self._update_pipeline_display,
@@ -259,36 +278,39 @@ class MainWindow(ctk.CTk):
         )
 
         # ── Local Histogram Equalization ──────────────────
-        self._section_title(panel, "LOCAL HISTOGRAM EQ.")
+        he_card = self._section_card(self._page_spatial)
+        self._section_title(he_card, "LOCAL HISTOGRAM EQ.")
 
-        ctk.CTkLabel(panel, text="Block Size:", font=FONT_SMALL,
+        ctk.CTkLabel(he_card, text="Block Size:", font=FONT_SMALL,
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self._block_var = tk.StringVar(value="8x8")
-        ctk.CTkOptionMenu(panel, variable=self._block_var,
+        ctk.CTkOptionMenu(he_card, variable=self._block_var,
                           values=["4x4", "8x8", "16x16", "32x32"],
                           width=226).pack(padx=12, pady=3)
 
-        ctk.CTkLabel(panel, text="Mode:", font=FONT_SMALL,
+        ctk.CTkLabel(he_card, text="Mode:", font=FONT_SMALL,
                      text_color=TEXT_DIM).pack(anchor="w", padx=12)
         self._lhe_mode_var = tk.StringVar(value="Interpolated")
         ctk.CTkSegmentedButton(
-            panel,
+            he_card,
             values=["Block", "Interpolated"],
             variable=self._lhe_mode_var,
             width=226,
         ).pack(padx=12, pady=3)
 
-        ctk.CTkButton(panel, text="▶  Apply Local HE",
+        ctk.CTkButton(he_card, text="▶  Apply Local HE",
                       command=self._apply_local_he).pack(padx=12, pady=6, fill="x")
 
-        ctk.CTkButton(panel, text="Before/After HE",
+        ctk.CTkButton(he_card, text="Before/After HE",
                   command=self._show_histogram_comparison).pack(padx=12, pady=(2, 6), fill="x")
 
-        self._divider(panel)
+        # Group: Frequency filters
+        self._group_title(self._page_frequency, "FREQUENCY FILTERS")
 
         # ── FFT & Notch Filter (Members 1 & 2) ───────────────
+        fft_card = self._section_card(self._page_frequency)
         FFTPanel(
-            panel,
+            fft_card,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
             on_pipeline_updated=self._update_pipeline_display,
@@ -296,21 +318,26 @@ class MainWindow(ctk.CTk):
         )
 
         # ── ROI Analysis (Members 3 & 4) ──────────────────────
+        roi_card = self._section_card(self._page_frequency)
         self._roi_panel = ROIPanel(
-            panel,
+            roi_card,
             on_toggle_roi_mode=self._set_roi_mode,
             on_clear_roi=self._clear_roi,
             on_analyze_roi=self._analyze_roi,
         )
 
         # ── Morphological Engine (Bonus) ───────────────────────
+        self._group_title(self._page_morphology, "MORPHOLOGY")
+        morph_card = self._section_card(self._page_morphology)
         MorphologyPanel(
-            panel,
+            morph_card,
             pipeline=self.pipeline,
             on_image_updated=self._display_image,
             on_pipeline_updated=self._update_pipeline_display,
             on_status=self._set_status,
         )
+
+        self._show_left_page("Spatial")
 
     # ── Center image canvas ───────────────────────────────
 
@@ -353,9 +380,10 @@ class MainWindow(ctk.CTk):
         panel = ctk.CTkScrollableFrame(self, width=240, corner_radius=0, fg_color=BG_SIDEBAR)
         panel.grid(row=1, column=2, sticky="nsew")
 
-        self._section_title(panel, "IMAGE METADATA")
+        meta_card = self._section_card(panel)
+        self._section_title(meta_card, "IMAGE METADATA")
         self._meta_box = ctk.CTkTextbox(
-            panel,
+            meta_card,
             height=220,
             font=FONT_MONO,
             state="disabled",
@@ -366,8 +394,6 @@ class MainWindow(ctk.CTk):
         )
         self._meta_box.pack(fill="x", padx=8, pady=4)
         self._update_metadata_display()
-
-        self._divider(panel)
 
         # Initialize pipeline panel with undo/redo/reset/save-log callbacks
         self._pipeline_panel = PipelinePanel(
@@ -385,6 +411,37 @@ class MainWindow(ctk.CTk):
     def _section_title(self, parent, text):
         ctk.CTkLabel(parent, text=text, font=FONT_TITLE, text_color=TEXT_MAIN).pack(
             anchor="w", padx=12, pady=(12, 2))
+
+    def _group_title(self, parent, text):
+        ctk.CTkLabel(parent, text=text, font=FONT_SMALL, text_color=TEXT_DIM).pack(
+            anchor="w", padx=12, pady=(6, 2))
+
+    def _section_card(self, parent):
+        card = ctk.CTkFrame(
+            parent,
+            fg_color=BG_CARD,
+            corner_radius=10,
+            border_width=1,
+            border_color=BORDER_CYAN,
+        )
+        card.pack(fill="x", padx=10, pady=(0, 8))
+        return card
+
+    def _on_left_nav_change(self, value):
+        self._show_left_page(value)
+
+    def _show_left_page(self, name):
+        pages = {
+            "Spatial": self._page_spatial,
+            "Frequency": self._page_frequency,
+            "Morphology": self._page_morphology,
+        }
+        for page in pages.values():
+            page.pack_forget()
+
+        page = pages.get(name)
+        if page is not None:
+            page.pack(fill="x", padx=0, pady=0)
 
     def _divider(self, parent):
         ctk.CTkFrame(parent, height=2, fg_color=BORDER_CYAN).pack(

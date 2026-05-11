@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import tkinter as tk
 from gui.theme import (
-    ACCENT_BLUE, ACCENT_PURPLE, BG_ELEVATED, BG_TEXTBOX,
+    ACCENT_BLUE, ACCENT_PURPLE, BG_CARD, BG_TEXTBOX,
     BORDER_CYAN, FONT_MONO, FONT_SMALL, FONT_TITLE, SUCCESS, TEXT_DIM, TEXT_MAIN,
 )
 
@@ -21,7 +21,7 @@ class PipelinePanel:
     def _build_ui(self):
         self._card = ctk.CTkFrame(
             self.parent,
-            fg_color=BG_ELEVATED,
+            fg_color=BG_CARD,
             corner_radius=10,
             border_width=1,
             border_color=BORDER_CYAN,
