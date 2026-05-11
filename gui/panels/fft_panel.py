@@ -1,4 +1,3 @@
-"""FFT panel for the left sidebar (Member 1 — Show Spectrum button)."""
 import customtkinter as ctk
 
 from gui.theme import BORDER_CYAN, FONT_SMALL, FONT_TITLE, TEXT_DIM, TEXT_MAIN
@@ -8,6 +7,21 @@ class FFTPanel:
     """Section in the left sidebar that opens the SpectrumWindow."""
 
     def __init__(self, parent, pipeline, on_image_updated, on_pipeline_updated, on_status):
+        """Create the FFT panel UI and wire callbacks.
+
+        Parameters
+        ----------
+        parent : widget
+            Parent container for the panel.
+        pipeline : Pipeline
+            Shared pipeline holding the current image and history.
+        on_image_updated : callable
+            Callback to refresh the main image display.
+        on_pipeline_updated : callable
+            Callback to refresh the pipeline history UI.
+        on_status : callable
+            Status bar callback for messages.
+        """
         self._parent              = parent
         self._pipeline            = pipeline
         self._on_image_updated    = on_image_updated
@@ -32,6 +46,7 @@ class FFTPanel:
             fill="x", padx=8, pady=8)
 
     def _open_spectrum(self):
+        """Open or raise the spectrum window if the pipeline has an image."""
         if self._pipeline.is_empty:
             self._on_status("Load an image first.", "warn")
             return
@@ -44,12 +59,15 @@ class FFTPanel:
         except Exception:
             pass
 
-        from gui.windows.spectrum_window import SpectrumWindow
-        root = self._parent.winfo_toplevel()
-        self._win = SpectrumWindow(
-            root,
-            self._pipeline,
-            self._on_image_updated,
-            self._on_pipeline_updated,
-            self._on_status,
-        )
+        try:
+            from gui.windows.spectrum_window import SpectrumWindow
+            root = self._parent.winfo_toplevel()
+            self._win = SpectrumWindow(
+                root,
+                self._pipeline,
+                self._on_image_updated,
+                self._on_pipeline_updated,
+                self._on_status,
+            )
+        except Exception as exc:
+            self._on_status(f"Unable to open spectrum: {exc}", "error")

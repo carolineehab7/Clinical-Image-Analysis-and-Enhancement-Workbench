@@ -1,4 +1,3 @@
-"""Spectrum viewer + notch filter UI (Members 1 & 2)."""
 import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk
@@ -25,6 +24,8 @@ class SpectrumWindow(ctk.CTkToplevel):
     """Side-by-side original / log-magnitude spectrum.  Click spectrum to place notches."""
 
     def __init__(self, parent, pipeline, on_image_updated, on_pipeline_updated, on_status):
+        #Sets up the window and computes the FFT once from the current pipeline image. 
+        #Any FFT or image errors are caught and shown in status, then the window closes gracefully.
         super().__init__(parent)
         self.title("FFT Spectrum & Notch Filter")
         self.geometry("1100x720")
@@ -36,12 +37,17 @@ class SpectrumWindow(ctk.CTkToplevel):
         self._on_pipeline_updated= on_pipeline_updated
         self._on_status          = on_status
 
-        # Member 1 — compute FFT on current pipeline image
-        self._original              = pipeline.current_image.copy()
-        self._F_shifted, self._mag  = compute_fft(self._original)   # shared complex array
-        self._rows, self._cols      = self._F_shifted.shape
+        #compute FFT on current pipeline image
+        try:
+            self._original = pipeline.current_image.copy()
+            self._F_shifted, self._mag = compute_fft(self._original)   # shared complex array
+        except Exception as exc:
+            self._on_status(f"FFT error: {exc}", "error")
+            self.destroy()
+            return
+        self._rows, self._cols = self._F_shifted.shape
 
-        # Member 2 — notch list
+        # notch list
         self._notches: list[tuple[int, int]] = []
 
         # Display geometry (filled when canvases are drawn)
@@ -59,6 +65,7 @@ class SpectrumWindow(ctk.CTkToplevel):
     # ──────────────────────────────────────────────────────────────────────
 
     def _build(self):
+        """Build all widgets for the spectrum window."""
         ctk.CTkLabel(self, text="FFT Spectrum & Notch Filter",
                      font=FONT_TITLE, text_color=TEXT_MAIN).pack(pady=(10, 4))
 
@@ -134,6 +141,7 @@ class SpectrumWindow(ctk.CTkToplevel):
     # ──────────────────────────────────────────────────────────────────────
 
     def _redraw_all(self):
+        """Redraw both panels and overlay any notch markers."""
         self._draw_array(self._orig_canvas, self._original,
                          "_orig_photo", "_orig_x0", "_orig_y0", "_orig_sc")
         self._draw_array(self._spec_canvas, self._mag,
@@ -147,15 +155,22 @@ class SpectrumWindow(ctk.CTkToplevel):
         ch = max(canvas.winfo_height(), 200)
         canvas.delete("all")
 
+        if array is None or np.asarray(array).size == 0:
+            return
+
         h, w = array.shape[:2]
         sc = min(cw / w, ch / h)
         dw, dh = int(w * sc), int(h * sc)
 
-        arr8 = np.clip(array, 0, 255).astype(np.uint8)
-        pil  = Image.fromarray(arr8, mode="L" if arr8.ndim == 2 else "RGB")
-        pil  = pil.resize((dw, dh), Image.NEAREST)
-        photo = ImageTk.PhotoImage(pil)
-        setattr(self, photo_attr, photo)
+        try:
+            arr8 = np.clip(array, 0, 255).astype(np.uint8)
+            pil = Image.fromarray(arr8, mode="L" if arr8.ndim == 2 else "RGB")
+            pil = pil.resize((dw, dh), Image.NEAREST)
+            photo = ImageTk.PhotoImage(pil)
+            setattr(self, photo_attr, photo)
+        except Exception as exc:
+            self._on_status(f"Render error: {exc}", "error")
+            return
 
         cx, cy = cw // 2, ch // 2
         canvas.create_image(cx, cy, anchor="center", image=photo)
@@ -168,23 +183,24 @@ class SpectrumWindow(ctk.CTkToplevel):
     # ──────────────────────────────────────────────────────────────────────
 
     def _freq_to_canvas(self, u, v):
-        """FFT frequency (u, v) → spectrum canvas (cx, cy)."""
+        """FFT frequency (u, v) -> spectrum canvas (cx, cy)."""
         cx = self._spec_x0 + (v + self._cols // 2) * self._spec_sc
         cy = self._spec_y0 + (u + self._rows // 2) * self._spec_sc
         return cx, cy
 
     def _canvas_to_freq(self, cx, cy):
-        """Spectrum canvas (cx, cy) → FFT frequency (u, v)."""
+        """Spectrum canvas (cx, cy) -> FFT frequency (u, v)."""
         sc = self._spec_sc if self._spec_sc > 0 else 1.0
         v = round((cx - self._spec_x0) / sc - self._cols // 2)
         u = round((cy - self._spec_y0) / sc - self._rows // 2)
         return u, v
 
     # ──────────────────────────────────────────────────────────────────────
-    # Notch placement (Member 2)
+    # Notch placement
     # ──────────────────────────────────────────────────────────────────────
 
     def _on_spectrum_click(self, event):
+        """Add a notch at the clicked frequency and redraw markers."""
         u, v = self._canvas_to_freq(event.x, event.y)
         if (u, v) in self._notches or (-u, -v) in self._notches:
             return
@@ -196,10 +212,13 @@ class SpectrumWindow(ctk.CTkToplevel):
         self._draw_notch_markers()
 
     def _draw_notch_markers(self):
+        """Overlay notch positions and D0 radius rings on the spectrum."""
         try:
             D0 = float(self._d0_var.get())
         except ValueError:
             D0 = 20.0
+        if D0 < 0:
+            D0 = 0.0
         D0_px = D0 * self._spec_sc
 
         for (u, v) in self._notches:
@@ -223,22 +242,25 @@ class SpectrumWindow(ctk.CTkToplevel):
                                                outline=_CONJ_COLOR, width=1, dash=(3, 3))
 
     def _update_notch_label(self):
+        """Refresh the notch list label to reflect current selections."""
         if not self._notches:
             self._notch_label_var.set("None")
         else:
             self._notch_label_var.set("  ".join(f"({u},{v})" for u, v in self._notches))
 
     def _clear_notches(self):
+        """Clear all notch selections and redraw the spectrum."""
         self._notches.clear()
         self._update_notch_label()
         self._draw_array(self._spec_canvas, self._mag,
                          "_spec_photo", "_spec_x0", "_spec_y0", "_spec_sc")
 
     # ──────────────────────────────────────────────────────────────────────
-    # Notch filter application (Member 2)
+    # Notch filter application
     # ──────────────────────────────────────────────────────────────────────
 
     def _apply_notch(self):
+        """Generate a notch mask and apply it to the stored FFT."""
         if not self._notches:
             self._on_status("Place at least one notch on the spectrum first.", "warn")
             return
@@ -251,18 +273,26 @@ class SpectrumWindow(ctk.CTkToplevel):
             n = int(self._n_var.get())
         except ValueError:
             n = 2
+        if D0 < 0:
+            D0 = 0.0
+        if n < 1:
+            n = 1
 
         ftype = self._filter_var.get()
         shape = self._F_shifted.shape
 
-        if ftype == "Ideal":
-            mask = ideal_notch_mask(shape, self._notches, D0)
-        elif ftype == "Butterworth":
-            mask = butterworth_notch_mask(shape, self._notches, D0, n)
-        else:
-            mask = gaussian_notch_mask(shape, self._notches, D0)
+        try:
+            if ftype == "Ideal":
+                mask = ideal_notch_mask(shape, self._notches, D0)
+            elif ftype == "Butterworth":
+                mask = butterworth_notch_mask(shape, self._notches, D0, n)
+            else:
+                mask = gaussian_notch_mask(shape, self._notches, D0)
 
-        result = apply_notch_filter(self._F_shifted, mask)
+            result = apply_notch_filter(self._F_shifted, mask)
+        except Exception as exc:
+            self._on_status(f"Notch filter error: {exc}", "error")
+            return
 
         suffix = f", n={n}" if ftype == "Butterworth" else ""
         desc   = f"Notch Filter — {ftype} (D₀={D0}{suffix})"

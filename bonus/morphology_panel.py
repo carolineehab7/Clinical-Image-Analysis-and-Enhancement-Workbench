@@ -1,4 +1,3 @@
-"""Morphological Engine panel for the left sidebar (Bonus Task)."""
 import tkinter as tk
 import customtkinter as ctk
 
@@ -11,6 +10,21 @@ from gui.theme import (
 class MorphologyPanel:
 
     def __init__(self, parent, pipeline, on_image_updated, on_pipeline_updated, on_status):
+        """Build the Morphological Engine panel and hook up callbacks.
+
+        Parameters
+        ----------
+        parent : widget
+            Parent container for the panel.
+        pipeline : Pipeline
+            Shared pipeline holding the current image and history.
+        on_image_updated : callable
+            Callback to refresh the main image display.
+        on_pipeline_updated : callable
+            Callback to refresh the pipeline history UI.
+        on_status : callable
+            Status bar callback for messages.
+        """
         self._pipeline            = pipeline
         self._on_image_updated    = on_image_updated
         self._on_pipeline_updated = on_pipeline_updated
@@ -93,27 +107,35 @@ class MorphologyPanel:
     # ── internals ───────────────────────────────────────────────────────
 
     def _sync_thresh_label(self, *_):
+        """Keep the numeric label in sync with the slider value."""
         self._thresh_lbl.configure(text=str(self._thresh_var.get()))
 
     def _get_se(self):
-        size  = int(self._se_size_var.get().split("×")[0])
+        """Return the structuring element selected in the UI."""
+        size = int(self._se_size_var.get().split("×")[0])
         shape = self._se_shape_var.get().lower()
         from bonus.morphology import make_structuring_element
         return make_structuring_element(size, shape)
 
     def _binarize(self):
+        """Threshold the current image into a binary mask."""
         if self._pipeline.is_empty:
             self._on_status("Load an image first.", "warn")
             return
         from bonus.morphology import threshold
-        T      = self._thresh_var.get()
-        result = threshold(self._pipeline.current_image, T)
+        try:
+            T = self._thresh_var.get()
+            result = threshold(self._pipeline.current_image, T)
+        except Exception as exc:
+            self._on_status(f"Threshold error: {exc}", "error")
+            return
         self._pipeline.push(result, f"Threshold T={T}")
         self._on_image_updated(result)
         self._on_pipeline_updated()
         self._on_status(f"Binarized at T={T}", "ok")
 
     def _apply(self, op: str):
+        """Apply the selected morphology operation using the current SE."""
         if self._pipeline.is_empty:
             self._on_status("Load an image first.", "warn")
             return
@@ -126,7 +148,11 @@ class MorphologyPanel:
             "Boundary": (boundary_extraction,"Boundary Extraction"),
         }
         fn, label = ops[op]
-        structuring_element      = self._get_se()
+        try:
+            structuring_element = self._get_se()
+        except Exception as exc:
+            self._on_status(f"Invalid structuring element: {exc}", "error")
+            return
         structuring_element_info = f"{self._se_size_var.get()} {self._se_shape_var.get()}"
         try:
             result = fn(self._pipeline.current_image, structuring_element)
