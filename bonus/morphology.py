@@ -186,28 +186,12 @@ def erode(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
     return result * 255
 
 def dilate(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
-    """Perform binary dilation using the given structuring element.
 
-    The output pixel is 1 when any SE foreground position matches 1 in the
-    padded input. This is implemented by OR-accumulating SE-shifted views.
-
-    Parameters
-    ----------
-    binary : np.ndarray
-        Input binary image (2D). If RGB, it is converted to grayscale first.
-    se : np.ndarray
-        Structuring element as a 2D array with values in {0, 1}.
-
-    Returns
-    -------
-    np.ndarray
-        Dilated binary image with values 0 or 255.
-    """
-    b = _to_binary(binary)
-    se_bin = _validate_se(se)
-    sh, sw = se_bin.shape
-    ph, pw = sh // 2, sw // 2
-    h, w = b.shape
+    b = _to_binary(binary) # Convert to binary {0,1} for processing
+    se_bin = _validate_se(se) # Validate and convert SE to binary {0,1}
+    sh, sw = se_bin.shape # Get SE size
+    ph, pw = sh // 2, sw // 2 # Compute padding for centering SE
+    h, w = b.shape # Get input image size
 
     # Zero-pad (boundary = 0 → background stays background)
     padded = np.pad(b, ((ph, ph), (pw, pw)), mode="constant", constant_values=0)
@@ -216,8 +200,10 @@ def dilate(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
     result = np.zeros((h, w), dtype=np.uint8)
     for i in range(sh):
         for j in range(sw):
-            if se_bin[i, j]:
-                result |= padded[i:i + h, j:j + w]
+            if se_bin[i, j]: # Only consider SE positions that are active (1) 
+                # This way, a pixel in the output becomes 1 if at least one of the SE's foreground pixels overlaps with a foreground pixel in the input, which is the definition of dilation.
+                result |= padded[i:i + h, j:j + w] # OR to set pixel if any SE position matches foreground 
+                
 
     return result * 255
 
