@@ -683,7 +683,7 @@ class MainWindow(ctk.CTk):
 
         # Apply local histogram equalization with selected block size
         block_size = parse_block_size(self._block_var.get())
-        image_equalized = local_histogram_equalization(current_image.copy(), block_size)
+        image_equalized = local_histogram_equalization_interpolated(current_image.copy(), block_size)
         histogram_after = compute_histogram(image_equalized.flatten().astype("uint8"))
         
         # Show comparison window
