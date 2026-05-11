@@ -62,7 +62,6 @@ class ROIPanel:
     def set_status(self, text: str):
         self._status_var.set(text)
 
-
     def _toggle(self):
         self._active = not self._active
         self._on_toggle(self._active)

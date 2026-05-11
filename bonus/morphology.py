@@ -238,8 +238,8 @@ def closing(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
 
 # boundary extraction: Original - Eroded
 # Outlines structures
-def boundary_extraction(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
+def boundary_extraction(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
     """Extract boundaries by subtracting the eroded image from the original."""
     original_image = _to_binary(binary)
-    eroded_image = _to_binary(erode(binary, structuring_element))
+    eroded_image = _to_binary(erode(binary, se))
     return np.clip(original_image - eroded_image, 0, 1).astype(np.uint8) * 255
