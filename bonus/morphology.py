@@ -1,10 +1,6 @@
 """
-Clinical Morphological Engine — Bonus Task.
-
-All operations are implemented from scratch using only NumPy array slicing
-and bitwise operations. No cv2, skimage, or scipy morphology functions are used.
-
-Algorithm convention
+Clinical Morphological Engine.
+Algorithm:
 --------------------
 - Binary images are stored as uint8 with values 0 (background) or 255 (foreground).
 - Erosion  : output pixel = 255 iff every foreground pixel of the SE is matched.
@@ -13,9 +9,7 @@ Algorithm convention
 - Closing  : Dilation → Erosion   (fills small holes / gaps).
 - Boundary : Original − Eroded    (outline of anatomical structures).
 """
-
 import numpy as np
-
 
 # ─────────────────────────────────────────────
 # Structuring-element factory
@@ -75,11 +69,6 @@ def threshold(image: np.ndarray, T: int) -> np.ndarray:
     -------
     np.ndarray
         Binary uint8 image with values 0 or 255.
-
-    Raises
-    ------
-    ValueError
-        If the input image is empty or has unsupported shape.
     """
     gray = _to_gray(image)
     T = int(np.clip(T, 0, 255))
@@ -87,7 +76,7 @@ def threshold(image: np.ndarray, T: int) -> np.ndarray:
 
 
 # ─────────────────────────────────────────────
-# Core operations (vectorised "from scratch")
+# Core operations (vectorised)
 # ─────────────────────────────────────────────
 
 def _to_gray(image: np.ndarray) -> np.ndarray:
