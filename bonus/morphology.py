@@ -115,17 +115,17 @@ def dilate(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
 
 # opening: Erosion then Dilation
 # Removes small objects, breaks connections
-def opening(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
-    return dilate(erode(binary, structuring_element), structuring_element)
+def opening(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
+    return dilate(erode(binary, se), se)
 
 # closing: Dilation then Erosion
 # Fill small holes, connect broken parts
-def closing(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
-    return erode(dilate(binary, structuring_element), structuring_element)
+def closing(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
+    return erode(dilate(binary, se), se)
 
 # boundary extraction: Original - Eroded
 # Outlines structures
-def boundary_extraction(binary: np.ndarray, structuring_element: np.ndarray) -> np.ndarray:
+def boundary_extraction(binary: np.ndarray, se: np.ndarray) -> np.ndarray:
     original_image = _to_binary(binary)
-    eroded_image = _to_binary(erode(binary, structuring_element))
+    eroded_image = _to_binary(erode(binary, se))
     return np.clip(original_image - eroded_image, 0, 1).astype(np.uint8) * 255
