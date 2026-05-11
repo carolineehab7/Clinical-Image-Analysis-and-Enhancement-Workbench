@@ -29,6 +29,7 @@ class MorphologyPanel:
         self._on_image_updated    = on_image_updated
         self._on_pipeline_updated = on_pipeline_updated
         self._on_status           = on_status
+        self._pre_binarize_image  = None  # saved before binarization for restore
 
         # ── Section header ──
         ctk.CTkLabel(parent, text="MORPHOLOGICAL ENGINE",
@@ -57,6 +58,11 @@ class MorphologyPanel:
         ctk.CTkButton(parent, text="Binarize Image",
                       command=self._binarize,
                       fg_color=ACCENT_CYAN, hover_color="#007A8F").pack(
+                          padx=12, pady=(2, 2), fill="x")
+
+        ctk.CTkButton(parent, text="Restore to Real Image",
+                      command=self._restore_to_original,
+                      fg_color=ACCENT_PURPLE, hover_color="#7E22CE").pack(
                           padx=12, pady=(2, 8), fill="x")
 
         # ── Structuring Element ──
@@ -122,7 +128,8 @@ class MorphologyPanel:
         from bonus.morphology import threshold
         try:
             T = self._thresh_var.get()
-            result = threshold(self._pipeline.current_image, T)
+            self._pre_binarize_image = self._pipeline.current_image.copy()
+            result = threshold(self._pre_binarize_image, T)
         except Exception as exc:
             self._on_status(f"Threshold error: {exc}", "error")
             return
@@ -130,6 +137,26 @@ class MorphologyPanel:
         self._on_image_updated(result)
         self._on_pipeline_updated()
         self._on_status(f"Binarized at T={T}", "ok")
+
+    def _restore_to_original(self):
+        """Apply the current binary/morphological mask onto the pre-binarization image."""
+        if self._pre_binarize_image is None:
+            self._on_status("Binarize an image first.", "warn")
+            return
+        if self._pipeline.is_empty:
+            self._on_status("No image in pipeline.", "warn")
+            return
+        import numpy as np
+        mask = (self._pipeline.current_image > 0).astype(np.uint8)
+        original = self._pre_binarize_image
+        if original.ndim == 2:
+            result = original * mask
+        else:
+            result = original * mask[:, :, np.newaxis]
+        self._pipeline.push(result, "Restored to Real Image")
+        self._on_image_updated(result)
+        self._on_pipeline_updated()
+        self._on_status("Real image restored with morphological mask applied.", "ok")
 
     def _apply(self, op: str):
         """Apply the selected morphology operation using the current SE."""
