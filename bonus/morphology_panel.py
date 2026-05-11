@@ -34,9 +34,6 @@ class MorphologyPanel:
         ctk.CTkLabel(parent, text="MORPHOLOGICAL ENGINE",
                      font=FONT_TITLE, text_color=ACCENT_CYAN).pack(
                          anchor="w", padx=12, pady=(12, 0))
-        ctk.CTkLabel(parent, text="Bonus  (4 marks)",
-                     font=FONT_SMALL, text_color=TEXT_DIM).pack(
-                         anchor="w", padx=12, pady=(0, 6))
 
         # ── Threshold ──
         ctk.CTkLabel(parent, text="Threshold value (0–255):",
