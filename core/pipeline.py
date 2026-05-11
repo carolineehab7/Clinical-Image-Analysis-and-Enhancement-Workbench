@@ -9,7 +9,7 @@ class Pipeline:
         self._redo_stack: List[Tuple[np.ndarray, str]] = []
 
     # Load an image into the pipeline and replacing any existing content
-    # #.copy is used to ensure that the original image data is not modified outside the pipeline
+    # .copy is used to ensure that the original image data is not modified outside the pipeline
     def load(self, image: np.ndarray) -> None:
         self._stack = [(image.copy(), "Original")]
         self._redo_stack.clear()
