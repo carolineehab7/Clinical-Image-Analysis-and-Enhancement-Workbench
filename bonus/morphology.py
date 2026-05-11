@@ -1,6 +1,5 @@
 """
-Clinical Morphological Engine.
-Algorithm:
+Algorithm convention
 --------------------
 - Binary images are stored as uint8 with values 0 (background) or 255 (foreground).
 - Erosion  : output pixel = 255 iff every foreground pixel of the SE is matched.
