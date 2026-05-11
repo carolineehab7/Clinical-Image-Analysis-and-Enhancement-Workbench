@@ -1,9 +1,4 @@
 """
-Clinical Morphological Engine — Bonus Task.
-
-All operations are implemented from scratch using only NumPy array slicing
-and bitwise operations. No cv2, skimage, or scipy morphology functions are used.
-
 Algorithm convention
 --------------------
 - Binary images are stored as uint8 with values 0 (background) or 255 (foreground).
